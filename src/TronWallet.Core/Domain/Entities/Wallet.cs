@@ -2,7 +2,7 @@ using System;
 
 namespace TronWallet.Core.Domain.Entities;
 
-class Wallet
+public class Wallet
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
