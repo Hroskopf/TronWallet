@@ -6,4 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TronWallet.Core\TronWallet.Core.csproj" />
+  </ItemGroup>
+
+
 </Project>

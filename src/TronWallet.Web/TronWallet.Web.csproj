@@ -10,4 +10,11 @@
     <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TronWallet.Core\TronWallet.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TronWallet.Infrastructure\TronWallet.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>
