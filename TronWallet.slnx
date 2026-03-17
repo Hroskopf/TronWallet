@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TronWallet.Core/TronWallet.Core.csproj" />
+    <Project Path="src/TronWallet.Infrastructure/TronWallet.Infrastructure.csproj" />
+    <Project Path="src/TronWallet.Web/TronWallet.Web.csproj" />
+  </Folder>
+</Solution>
