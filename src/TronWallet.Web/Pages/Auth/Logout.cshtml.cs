@@ -19,8 +19,6 @@ public class LogoutModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        Console.WriteLine("Im here");
-        _logger.LogInformation("Hello from logoutside");
         await _authService.Logout();
         
         return RedirectToPage("/Auth/Login");
