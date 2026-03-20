@@ -6,10 +6,10 @@ public class Wallet
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
-    public string TronAdress { get; set; }
+    public string TronAddress { get; set; }
     public string PrivateKeyEnc { get; set; }
     public string PublicKey { get; set; }
-    public string Network { get; set; }
-    public bool IsPrimary { get; set; }
+    public string Network { get; set; } = "shasta";
+    public bool IsPrimary { get; set; } = true;
     public DateTime CreatedAt { get; set; }
 }

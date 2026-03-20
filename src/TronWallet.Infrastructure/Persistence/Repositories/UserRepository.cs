@@ -17,23 +17,26 @@ public class UserRepository : IUserRepository
     {
         using var conn = _factory.CreateConnection();
         var sql = "SELECT EXISTS (SELECT 1 FROM users WHERE email = @Email)";
-        Console.WriteLine($"EMAIL SEARCH: {email}");
         return await conn.ExecuteScalarAsync<bool>(sql, new { Email = email });
     }
     public async Task<bool> ExistsByUsernameAsync(string username)
     {
         using var conn = _factory.CreateConnection();
         var sql = "SELECT EXISTS (SELECT 1 FROM users WHERE username = @Username)";
-        Console.WriteLine($"USERNAME SEARCH: {username}");
         return await conn.ExecuteScalarAsync<bool>(sql, new { Username = username });
     }
 
-    public async Task InsertAsync(User user)
+    public async Task<Guid> InsertAsync(User user)
     {
         using var conn = _factory.CreateConnection();
-        var sql = "INSERT INTO users (username, email, password_hash) VALUES (@Username, @Email, @PasswordHash)";
-        Console.WriteLine($"USER INSERT: {user}");
-        await conn.ExecuteAsync(sql, user);
+
+        var sql = @"
+            INSERT INTO users (username, email, password_hash)
+            VALUES (@Username, @Email, @PasswordHash)
+            RETURNING id;
+        ";
+
+        return await conn.QuerySingleAsync<Guid>(sql, user);
     }
 
     public async Task<User?> FindUserByEmailAsync(string email)

@@ -8,5 +8,5 @@ public interface IUserRepository
     Task<bool> ExistsByUsernameAsync(string username);
 
     Task<User?> FindUserByEmailAsync(string email);
-    Task InsertAsync(User user);
+    Task<Guid> InsertAsync(User user);
 }

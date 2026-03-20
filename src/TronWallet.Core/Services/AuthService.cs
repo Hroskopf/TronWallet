@@ -15,11 +15,11 @@ public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly ITronAdressService _tronAdressService;
-    private readonly IAesEncryptionService _aesEncryptionService;
+    private readonly IEncryptionService _aesEncryptionService;
     private readonly IWalletRepository _walletRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public AuthService(IUserRepository userRepository, ITronAdressService tronAdressService, IAesEncryptionService aesEncryptionService, IWalletRepository walletRepository, IHttpContextAccessor httpContextAccessor)
+    public AuthService(IUserRepository userRepository, ITronAdressService tronAdressService, IEncryptionService aesEncryptionService, IWalletRepository walletRepository, IHttpContextAccessor httpContextAccessor)
     {
 
         _userRepository = userRepository;
@@ -58,17 +58,27 @@ public class AuthService : IAuthService
         if (await _userRepository.ExistsByUsernameAsync(username))
             throw new Exception("User already exists");
 
+
+
         string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
 
-        // var wallet = _tronAdressService.GenerateWallet();
+        var (privateKeyHex, publicKeyHex, base58Address) = _tronAdressService.GenerateWallet();
 
-        // var privateKeyEnc = _aesEncryptionService.Encrypt(wallet.PrivateKeyHex);
+        var privateKeyEnc = _aesEncryptionService.Encrypt(privateKeyHex);
 
         var user = new User { Email = email, PasswordHash = hashedPassword, Username = username };
 
-        // await _walletRepository.InsertAsync(privateKeyEnc);
+        var userId = await _userRepository.InsertAsync(user);
 
-        await _userRepository.InsertAsync(user);
+        var wallet = new Wallet
+        {
+            UserId = userId,
+            TronAddress = base58Address,
+            PrivateKeyEnc = privateKeyEnc,
+            PublicKey = publicKeyHex,
+        };
+
+        await _walletRepository.InsertAsync(wallet);
 
         await SignInUserAsync(user);
 
