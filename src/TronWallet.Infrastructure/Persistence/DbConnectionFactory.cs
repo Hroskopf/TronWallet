@@ -8,9 +8,9 @@ public class DbConnectionFactory
 {
     private readonly string _connectionString;
 
-    public DbConnectionFactory(IConfiguration config)
+    public DbConnectionFactory(string connectionString)
     {
-        _connectionString = config.GetConnectionString("DefaultConnection")!;
+        _connectionString = connectionString;
     }
 
     public IDbConnection CreateConnection()

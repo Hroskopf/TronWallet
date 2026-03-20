@@ -16,10 +16,25 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 
-builder.Services.AddScoped<DbConnectionFactory>();
+builder.Services.AddSingleton<DbConnectionFactory>(sp =>
+{
+    var connectionString = sp.GetRequiredService<IConfiguration>()
+                             .GetConnectionString("DefaultConnection")
+                             ?? throw new InvalidOperationException("DefaultConnection string is missing");
+
+    return new DbConnectionFactory(connectionString);
+});
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITronAdressService, TronAdressService>();
-builder.Services.AddScoped<IAesEncryptionService, AesEncryptionService>();
+builder.Services.AddSingleton<IEncryptionService>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var key = config["Encryption:Key"];
+    if (string.IsNullOrWhiteSpace(key))
+        throw new Exception("Encryption key is missing");
+
+    return new AesEncryptionService(key);
+});
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthService, AuthService>();

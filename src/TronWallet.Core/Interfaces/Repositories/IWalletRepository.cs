@@ -4,5 +4,5 @@ namespace TronWallet.Core.Interfaces.Repositories;
 
 public interface IWalletRepository
 {
-    Task InsertAsync(string privateKeyEnc);
+    Task<Guid> InsertAsync(Wallet wallet);
 }
