@@ -1,3 +1,4 @@
 src/TronWallet.*/obj
 src/TronWallet.*/bin
 src/TronWallet.Web/Properties
+src/TronWallet.Web/appsettings.json

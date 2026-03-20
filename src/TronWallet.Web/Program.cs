@@ -4,7 +4,11 @@ using TronWallet.Infrastructure.Persistence.Repositories;
 using TronWallet.Core.Interfaces.Services;
 using TronWallet.Infrastructure.Tron;
 using TronWallet.Infrastructure.Security;
+using TronWallet.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
+
+Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 
 
+builder.Services.AddScoped<DbConnectionFactory>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITronAdressService, TronAdressService>();
 builder.Services.AddScoped<IAesEncryptionService, AesEncryptionService>();
@@ -19,6 +24,20 @@ builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Auth/Login";
+        options.LogoutPath = "/Auth/Logout"; // optional
+        options.ExpireTimeSpan = TimeSpan.FromHours(1);
+        options.SlidingExpiration = true;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    });
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -32,9 +51,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseStaticFiles();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

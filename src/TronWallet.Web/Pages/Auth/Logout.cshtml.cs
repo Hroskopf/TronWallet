@@ -1,12 +1,29 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using TronWallet.Core.Interfaces.Services;
 
-namespace MyApp.Namespace
+namespace TronWallet.Web.Pages.Auth;
+
+public class LogoutModel : PageModel
 {
-    public class LogoutModel : PageModel
+
+    private readonly ILogger<LogoutModel> _logger;
+    private readonly IAuthService _authService;
+    public LogoutModel(IAuthService authService, ILogger<LogoutModel> logger)
     {
-        public void OnGet()
-        {
-        }
+        _authService = authService;
+        _logger = logger;
+    }
+
+    public async Task<IActionResult> OnPostAsync()
+    {
+        Console.WriteLine("Im here");
+        _logger.LogInformation("Hello from logoutside");
+        await _authService.Logout();
+        
+        return RedirectToPage("/Auth/Login");
+
     }
 }

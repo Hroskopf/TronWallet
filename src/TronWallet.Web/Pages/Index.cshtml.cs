@@ -10,6 +10,6 @@ public class IndexModel : PageModel
     public bool IsAuthenticated { get; private set;}
     public void OnGet()
     {
-        IsAuthenticated = User.Identity != null && User.Identity.IsAuthenticated;
+        IsAuthenticated = (User.Identity != null && User.Identity.IsAuthenticated);
     }
 }
