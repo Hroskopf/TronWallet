@@ -29,7 +29,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     .AddCookie(options =>
     {
         options.LoginPath = "/Auth/Login";
-        options.LogoutPath = "/Auth/Logout"; // optional
+        options.AccessDeniedPath = "/Auth/Login";
+        options.LogoutPath = "/Auth/Logout"; 
         options.ExpireTimeSpan = TimeSpan.FromHours(1);
         options.SlidingExpiration = true;
         options.Cookie.HttpOnly = true;
