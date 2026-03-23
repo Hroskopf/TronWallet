@@ -42,14 +42,14 @@ public sealed class TronGridClient : ITronGridClient
         return await response.Content.ReadFromJsonAsync<TronTransactionInfo>();
     }
 
-    public async Task<TronTransactionsListResponse> GetTransactionsAsync(
-        string base58Address, int limit = 20, string? fingerprint = null)
-    {
-        var url = $"/v1/accounts/{base58Address}/transactions?limit={limit}";
-        if (fingerprint is not null) url += $"&fingerprint={fingerprint}";
-        var response = await _http.GetAsync(url);
-        response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<TronTransactionsListResponse>()
-               ?? new TronTransactionsListResponse([]);
-    }
+    // public async Task<TronTransactionsListResponse> GetTransactionsAsync(
+    //     string base58Address, int limit = 20, string? fingerprint = null)
+    // {
+    //     var url = $"/v1/accounts/{base58Address}/transactions?limit={limit}";
+    //     if (fingerprint is not null) url += $"&fingerprint={fingerprint}";
+    //     var response = await _http.GetAsync(url);
+    //     response.EnsureSuccessStatusCode();
+    //     return await response.Content.ReadFromJsonAsync<TronTransactionsListResponse>()
+    //            ?? new TronTransactionsListResponse([]);
+    // }
 }
