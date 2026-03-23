@@ -30,8 +30,10 @@ public class DashboardModel : PageModel
     public async Task OnGetAsync()
     {
         var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
         UserInfo = await _userRepository.FindUserByIdAsync(userId);
         Wallet = await _walletRepository.GetWalletByUserIdAsync(userId);
+        
         var response =  await _tronGridClient.GetAccountAsync(Wallet.TronAddress);
         if(response == null || response.Account == null)
         {
