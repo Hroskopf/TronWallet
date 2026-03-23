@@ -3,7 +3,7 @@ using System.Numerics;
 using TronWallet.Core.Domain.Enums;
 
 namespace TronWallet.Core.Domain.Entities;
-class WalletTransaction
+public class WalletTransaction
 {
     public Guid Id { get; set; }
     public Guid WalletId { get; set; }
