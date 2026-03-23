@@ -26,6 +26,7 @@ builder.Services.AddSingleton<DbConnectionFactory>(sp =>
 });
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITronAdressService, TronAdressService>();
+
 builder.Services.AddSingleton<IEncryptionService>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
@@ -35,8 +36,18 @@ builder.Services.AddSingleton<IEncryptionService>(sp =>
 
     return new AesEncryptionService(key);
 });
+
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddHttpClient("TronGrid", client =>
+{
+    client.BaseAddress = new Uri("https://api.shasta.trongrid.io/");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+builder.Services.AddScoped<ITronGridClient, TronGridClient>();
+
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 

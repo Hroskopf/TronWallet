@@ -2,18 +2,29 @@ using TronWallet.Core.Interfaces.Services;
 using TronWallet.Core.Domain.Entities.Tron;
 using System.Net.Http.Json;
 
+
 namespace TronWallet.Infrastructure.Tron;
 public sealed class TronGridClient : ITronGridClient
 {
     private readonly HttpClient _http;
 
-    public TronGridClient(HttpClient http) => _http = http;
-
-    public async Task<TronAccountResponse?> GetAccountAsync(string base58Address)
+    public TronGridClient(IHttpClientFactory httpClientFactory)
     {
-        var response = await _http.GetAsync($"/v1/accounts/{base58Address}");
+        _http = httpClientFactory.CreateClient("TronGrid");
+    }
+
+    public async Task<TronAccountResponse?> GetAccountAsync(string address)
+    {
+        var response = await _http.GetAsync($"v1/accounts/{address}");
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<TronAccountResponse>();
+
+        var dto = await response.Content.ReadFromJsonAsync<TronAccountResponseDto>();
+
+        return new TronAccountResponse
+        {
+            Success = dto?.Success ?? false,
+            Account = dto?.Data?.FirstOrDefault()
+        };
     }
 
     public async Task<TronUnsignedTx> CreateTransactionAsync(

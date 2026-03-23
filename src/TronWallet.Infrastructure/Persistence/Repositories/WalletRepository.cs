@@ -26,4 +26,25 @@ public class WalletRepository : IWalletRepository
         return await conn.QuerySingleAsync<Guid>(sql, wallet);
 
     }
+
+    public async Task<Wallet?> GetWalletByIdAsync(Guid walletId)
+    {
+        using var conn = _factory.CreateConnection(); 
+        const string sql = "SELECT * FROM wallets WHERE id = @WalletId LIMIT 1";
+
+        var wallet = await conn.QueryFirstOrDefaultAsync<Wallet>(sql, new { WalletId = walletId });
+
+        return wallet;
+    }
+
+    public async Task<Wallet?> GetWalletByUserIdAsync(Guid userId)
+    {
+        using var conn = _factory.CreateConnection(); 
+        const string sql = "SELECT * FROM wallets WHERE user_id = @UserId LIMIT 1";
+
+        var wallet = await conn.QueryFirstOrDefaultAsync<Wallet>(sql, new { UserId = userId });
+
+        return wallet;
+    }
+
 }

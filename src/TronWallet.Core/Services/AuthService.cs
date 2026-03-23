@@ -69,6 +69,7 @@ public class AuthService : IAuthService
         var user = new User { Email = email, PasswordHash = hashedPassword, Username = username };
 
         var userId = await _userRepository.InsertAsync(user);
+        user.Id = userId;
 
         var wallet = new Wallet
         {

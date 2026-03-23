@@ -8,8 +8,14 @@ namespace TronWallet.Web.Pages;
 public class IndexModel : PageModel
 {
     public bool IsAuthenticated { get; private set;}
-    public void OnGet()
+    public IActionResult OnGet()
     {
-        IsAuthenticated = (User.Identity != null && User.Identity.IsAuthenticated);
+        IsAuthenticated = User.Identity != null && User.Identity.IsAuthenticated;
+
+        if(IsAuthenticated)
+        {
+            return Redirect("/Cabinet/Dashboard");
+        }
+        return Page();
     }
 }

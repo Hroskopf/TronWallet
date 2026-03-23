@@ -49,4 +49,14 @@ public class UserRepository : IUserRepository
         return user;
 
     }
+
+    public async Task<User?> FindUserByIdAsync(Guid id)
+    {
+        using var conn = _factory.CreateConnection(); 
+        const string sql = "SELECT * FROM users WHERE id = @UserId LIMIT 1";
+
+        var user = await conn.QueryFirstOrDefaultAsync<User>(sql, new { UserId = id });
+
+        return user;
+    }
 }

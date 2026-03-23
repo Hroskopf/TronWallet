@@ -1,4 +1,60 @@
 ﻿@page
-@model MyApp.Namespace.DashboardModel
+@model TronWallet.Web.Pages.Cabinet.DashboardModel
 @{
+    ViewData["Title"] = "Dashboard";
 }
+
+<div class="dashboard-container" style="max-width:800px;margin:auto;padding:20px;font-family:sans-serif;">
+    <h1>Welcome, @Model.UserInfo.Username!</h1>
+
+    <!-- Wallet Info -->
+    <div class="wallet-info" style="border:1px solid #ddd;padding:15px;margin-top:20px;border-radius:8px;">
+        <h3>Wallet Address:</h3>
+        <p>@Model.Wallet.TronAddress</p>
+
+        <h3>TRX Balance:</h3>
+        <p>@Model.Balance TRX</p>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions" style="margin-top:20px;">
+        <h3>Actions</h3>
+        <a class="btn btn-primary" href="/Cabinet/Send">Send TRX</a>
+        <a class="btn btn-secondary" href="/Cabinet/Receive">Receive TRX</a>
+    </div>
+
+    <!-- Recent Transactions -->
+    @* <div class="recent-transactions" style="margin-top:30px;">
+        <h3>Recent Transactions</h3>
+        @if (Model.RecentTransactions != null && Model.RecentTransactions.Any())
+        {
+            <table style="width:100%;border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th style="border-bottom:1px solid #ccc;padding:8px;text-align:left;">Date</th>
+                        <th style="border-bottom:1px solid #ccc;padding:8px;text-align:left;">Type</th>
+                        <th style="border-bottom:1px solid #ccc;padding:8px;text-align:left;">Amount</th>
+                        <th style="border-bottom:1px solid #ccc;padding:8px;text-align:left;">To/From</th>
+                        <th style="border-bottom:1px solid #ccc;padding:8px;text-align:left;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var tx in Model.RecentTransactions)
+                    {
+                        <tr>
+                            <td style="padding:8px;">@tx.Date.ToString("g")</td>
+                            <td style="padding:8px;">@tx.Type</td>
+                            <td style="padding:8px;">@tx.Amount</td>
+                            <td style="padding:8px;">@tx.Counterparty</td>
+                            <td style="padding:8px;">@tx.Status</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p>No recent transactions</p>
+        } *@
+    </div>
+</div>

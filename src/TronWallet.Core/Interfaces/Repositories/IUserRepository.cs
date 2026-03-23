@@ -9,4 +9,5 @@ public interface IUserRepository
 
     Task<User?> FindUserByEmailAsync(string email);
     Task<Guid> InsertAsync(User user);
+    Task<User?> FindUserByIdAsync(Guid id);
 }
