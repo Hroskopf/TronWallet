@@ -1,7 +1,7 @@
 using TronWallet.Core.Interfaces.Services;
 using TronWallet.Core.Domain.Entities.Tron;
 using System.Net.Http.Json;
-
+using System.Text.Json;
 
 namespace TronWallet.Infrastructure.Tron;
 public sealed class TronGridClient : ITronGridClient
@@ -28,13 +28,35 @@ public sealed class TronGridClient : ITronGridClient
     }
 
     public async Task<TronUnsignedTx> CreateTransactionAsync(
-        string fromHex, string toHex, long amountSun)
+        string fromHex, string toHex, decimal amountSun)
     {
         var body = new { owner_address = fromHex, to_address = toHex, amount = amountSun };
         var response = await _http.PostAsJsonAsync("/wallet/createtransaction", body);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<TronUnsignedTx>()
-               ?? throw new InvalidOperationException("Empty response from TronGrid");
+
+
+        var json = await response.Content.ReadAsStringAsync();
+
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        var tx = JsonSerializer.Deserialize<TronUnsignedTx>(json, options)
+                ?? throw new InvalidOperationException("Empty response from TronGrid");
+        
+
+        using (var doc = JsonDocument.Parse(json))
+        {
+            if (doc.RootElement.TryGetProperty("raw_data", out var rawDataElement))
+            {
+                tx.RawDataStr = rawDataElement.GetRawText();
+            }
+        }
+
+
+        return tx;
+
     }
 
     public async Task<TronBroadcastResponse> BroadcastTransactionAsync(object signedTx)

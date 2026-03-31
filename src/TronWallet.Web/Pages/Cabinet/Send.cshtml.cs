@@ -5,16 +5,24 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using TronWallet.Core.Interfaces.Services;
 using TronWallet.Core.Interfaces.Repositories;
+using TronWallet.Infrastructure.Tron;
+using TronWallet.Core.Domain.Entities;
+using System.Text.Json;
+using System.Numerics;
+using System.Transactions;
 
 
 namespace TronWallet.Web.Pages.Cabinet;
 
 [Authorize]
-
 public class SendModel : PageModel
 {
-    private readonly ITronGridClient _tronClient;
+    private readonly ITronGridClient _tronGridClient;
     private readonly IWalletRepository _walletRepository;
+    private readonly IEncryptionService _encryptionService;
+    private readonly ITronAdressService _tronAdressService;
+    private readonly TronTransactionSigner _tronTransactionSigner;
+    private readonly ITransactionRepository _transactionRepository;
 
     [BindProperty]
     [Required]
@@ -23,15 +31,20 @@ public class SendModel : PageModel
     [BindProperty]
     [Required]
     [Range(0.000001, double.MaxValue, ErrorMessage = "Amount must be positive")]
-    public decimal Amount { get; set; }
+    public decimal AmountTRX { get; set; } // in TRX
 
     public string? Message { get; set; }
     public string? Error { get; set; }
+    public BigInteger TODO { get; private set; }
 
-    public SendModel(ITronGridClient tronClient, IWalletRepository walletRepository)
+    public SendModel(ITronGridClient tronGridClient, IWalletRepository walletRepository, IEncryptionService encryptionService, ITronAdressService tronAdressService, TronTransactionSigner tronTransactionSigner, ITransactionRepository transactionRepository)
     {
-        _tronClient = tronClient;
+        _tronGridClient = tronGridClient;
         _walletRepository = walletRepository;
+        _encryptionService = encryptionService;
+        _tronAdressService = tronAdressService;
+        _tronTransactionSigner = tronTransactionSigner;
+        _transactionRepository = transactionRepository;
     }
     public void OnGet()
     {
@@ -39,9 +52,82 @@ public class SendModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        
+        if (!ModelState.IsValid)
+            return Page();
 
-        return Page();
+        try
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!Guid.TryParse(userIdString, out Guid userId))
+            {
+                Error = "User not authenticated";
+                return Page();
+            }
+
+            var wallet = await _walletRepository.GetWalletByUserIdAsync(userId);
+
+            if (wallet == null)
+            {
+                Error = "Wallet not found";
+                return Page();
+            }
+            
+            var balanceTRX = (await _tronGridClient.GetAccountAsync(wallet.TronAddress))?.Account?.GetBalanceInTRX() ?? 0m;            
+            
+            if(balanceTRX < AmountTRX)
+            {
+                Error = "Not enough TRX on the balance";
+                return Page();
+            }
+            
+            var privateKeyHex = _encryptionService.Decrypt(wallet.PrivateKeyEnc);
+
+            var toAdressHex = _tronAdressService.Base58ToHex(ToAddress);
+            var fromAdressHex = _tronAdressService.Base58ToHex(wallet.TronAddress);
+
+            var unsignedTx = await _tronGridClient.CreateTransactionAsync(fromAdressHex, toAdressHex, AmountTRX * 1000000);
+            var txSign = _tronTransactionSigner.Sign(unsignedTx.RawDataHex, privateKeyHex);
+            privateKeyHex = null;
+            var broadcastResponse = await _tronGridClient.BroadcastTransactionAsync(new
+            {
+                txID = unsignedTx.TxID,
+                raw_data = unsignedTx.RawData,
+                raw_data_hex = unsignedTx.RawDataHex,
+                signature = new List<string> { txSign }
+            });
+            Console.WriteLine($"BROADCST RESULT: {broadcastResponse.Result}");
+            if(!broadcastResponse.Result)
+            {
+                throw new Exception("Oops something went wrong");
+            }
+
+            var txHash = unsignedTx.GetTxHash();
+
+            var txInfo = await _tronGridClient.GetTransactionInfoAsync(txHash) ?? throw new Exception("Transaction is not created");
+            
+            await _transactionRepository.InsertAsync(new WalletTransaction
+            {
+                WalletId = wallet.Id,
+                TxHash = txHash,
+                FromAddress = wallet.TronAddress,
+                ToAddress = ToAddress,
+                AmountSun = (long)(AmountTRX * 1_000_000m),
+                BlockNumber = txInfo.BlockNumber,
+                BlockTime = DateTimeOffset.FromUnixTimeMilliseconds(txInfo.BlockTimeStamp).DateTime,
+                RawData = unsignedTx.RawDataStr
+            });
+
+
+            Message = $"Transaction sent! TX ID: {unsignedTx.TxID}";
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+            return Page();
+        }
+
+        return Redirect("/Cabinet/History");
     }
 }
 

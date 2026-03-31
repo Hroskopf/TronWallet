@@ -41,7 +41,7 @@ public class DashboardModel : PageModel
         }
         else
         {
-            Balance = response.Account.Balance;
+            Balance = response.Account.GetBalanceInTRX();
         }
     } 
 }

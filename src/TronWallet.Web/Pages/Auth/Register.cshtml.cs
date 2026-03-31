@@ -50,6 +50,7 @@ public class RegisterModel : PageModel
         try
         {
             await _authService.Register(Email, Username, Password);
+            Password = null;
             return RedirectToPage("/Cabinet/Dashboard");
         }
         catch (Exception ex)

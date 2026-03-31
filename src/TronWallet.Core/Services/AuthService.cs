@@ -62,6 +62,8 @@ public class AuthService : IAuthService
 
         string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
 
+        password = "";
+
         var (privateKeyHex, publicKeyHex, base58Address) = _tronAdressService.GenerateWallet();
 
         var privateKeyEnc = _aesEncryptionService.Encrypt(privateKeyHex);
@@ -96,6 +98,7 @@ public class AuthService : IAuthService
         }
 
         bool isPasswordCorrect = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+        password = "";
         if (!isPasswordCorrect)
         {
             return null; 

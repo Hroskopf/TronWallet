@@ -35,6 +35,8 @@ public class LoginModel : PageModel
 
         var user = await _authService.Login(Email, Password);
 
+        Password = null;
+
 
         if (user == null)
         {

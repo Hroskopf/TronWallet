@@ -19,10 +19,10 @@ public sealed class AesEncryptionService : IEncryptionService
             throw new ArgumentException("Key must be 32 bytes.");
     }
 
-    public string Encrypt(string plaintext)
+    public string Encrypt(string strHex)
     {
         var nonce      = new byte[12];
-        var plaintextB = Encoding.UTF8.GetBytes(plaintext);
+        var plaintextB = Encoding.UTF8.GetBytes(strHex);
         var ciphertext = new byte[plaintextB.Length];
         var tag        = new byte[16];
 
@@ -38,9 +38,9 @@ public sealed class AesEncryptionService : IEncryptionService
         return Convert.ToBase64String(result);
     }
 
-    public string Decrypt(string encrypted)
+    public string Decrypt(string strEnc)
     {
-        var data       = Convert.FromBase64String(encrypted);
+        var data       = Convert.FromBase64String(strEnc);
         var nonce      = data[..12];
         var tag        = data[^16..];
         var ciphertext = data[12..^16];

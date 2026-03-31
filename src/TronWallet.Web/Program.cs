@@ -6,6 +6,7 @@ using TronWallet.Infrastructure.Tron;
 using TronWallet.Infrastructure.Security;
 using TronWallet.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using TronNet;
 
 
 Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
@@ -14,7 +15,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddSingleton<TronTransactionSigner>();
 
+builder.Services.AddTronNet(options =>
+{
+    options.Network = TronNetwork.MainNet;
+});
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient("TronGrid", client =>
+{
+    client.BaseAddress = new Uri("https://api.shasta.trongrid.io/");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 
 builder.Services.AddSingleton<DbConnectionFactory>(sp =>
 {
@@ -24,9 +37,13 @@ builder.Services.AddSingleton<DbConnectionFactory>(sp =>
 
     return new DbConnectionFactory(connectionString);
 });
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ITronAdressService, TronAdressService>();
 
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IWalletRepository, WalletRepository>();
+
+
+builder.Services.AddScoped<ITronAdressService, TronAdressService>();
 builder.Services.AddSingleton<IEncryptionService>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
@@ -37,17 +54,8 @@ builder.Services.AddSingleton<IEncryptionService>(sp =>
     return new AesEncryptionService(key);
 });
 
-builder.Services.AddScoped<IWalletRepository, WalletRepository>();
-builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddHttpClient("TronGrid", client =>
-{
-    client.BaseAddress = new Uri("https://api.shasta.trongrid.io/");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
 builder.Services.AddScoped<ITronGridClient, TronGridClient>();
-
-
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 
@@ -67,15 +75,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    // TODO: create Error page.
-    // app.UseExceptionHandler("/Error");
-    // // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    // app.UseHsts();
-}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
