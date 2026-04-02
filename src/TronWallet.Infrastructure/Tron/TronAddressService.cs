@@ -5,10 +5,10 @@ using TronNet.Crypto;
 
 namespace TronWallet.Infrastructure.Tron;
 
-public class TronAdressService : ITronAdressService
+public class TronAddressService : ITronAddressService
 {
 
-    public TronAdressService()
+    public TronAddressService()
     {
         
     }

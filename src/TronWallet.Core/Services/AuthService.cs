@@ -14,12 +14,12 @@ namespace TronWallet.Core.Services;
 public class AuthService : IAuthService
 {
     private readonly IUserRepository _userRepository;
-    private readonly ITronAdressService _tronAdressService;
+    private readonly ITronAddressService _tronAdressService;
     private readonly IEncryptionService _aesEncryptionService;
     private readonly IWalletRepository _walletRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public AuthService(IUserRepository userRepository, ITronAdressService tronAdressService, IEncryptionService aesEncryptionService, IWalletRepository walletRepository, IHttpContextAccessor httpContextAccessor)
+    public AuthService(IUserRepository userRepository, ITronAddressService tronAdressService, IEncryptionService aesEncryptionService, IWalletRepository walletRepository, IHttpContextAccessor httpContextAccessor)
     {
 
         _userRepository = userRepository;

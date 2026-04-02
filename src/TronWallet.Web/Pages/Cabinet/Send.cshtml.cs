@@ -20,7 +20,7 @@ public class SendModel : PageModel
     private readonly ITronGridClient _tronGridClient;
     private readonly IWalletRepository _walletRepository;
     private readonly IEncryptionService _encryptionService;
-    private readonly ITronAdressService _tronAdressService;
+    private readonly ITronAddressService _tronAdressService;
     private readonly TronTransactionSigner _tronTransactionSigner;
     private readonly ITransactionRepository _transactionRepository;
 
@@ -37,7 +37,7 @@ public class SendModel : PageModel
     public string? Error { get; set; }
     public BigInteger TODO { get; private set; }
 
-    public SendModel(ITronGridClient tronGridClient, IWalletRepository walletRepository, IEncryptionService encryptionService, ITronAdressService tronAdressService, TronTransactionSigner tronTransactionSigner, ITransactionRepository transactionRepository)
+    public SendModel(ITronGridClient tronGridClient, IWalletRepository walletRepository, IEncryptionService encryptionService, ITronAddressService tronAdressService, TronTransactionSigner tronTransactionSigner, ITransactionRepository transactionRepository)
     {
         _tronGridClient = tronGridClient;
         _walletRepository = walletRepository;

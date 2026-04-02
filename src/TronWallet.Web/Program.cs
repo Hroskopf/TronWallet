@@ -46,7 +46,7 @@ builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 
 
-builder.Services.AddScoped<ITronAdressService, TronAdressService>();
+builder.Services.AddScoped<ITronAddressService, TronAddressService>();
 builder.Services.AddSingleton<IEncryptionService>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
