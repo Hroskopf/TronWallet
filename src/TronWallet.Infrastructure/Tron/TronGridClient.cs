@@ -26,16 +26,23 @@ public sealed class TronGridClient : ITronGridClient
             Account = dto?.Data?.FirstOrDefault()
         };
     }
-
     public async Task<TronUnsignedTx> CreateTransactionAsync(
-        string fromHex, string toHex, decimal amountSun)
+        string fromHex, string toHex, long amountSun)
     {
         var body = new { owner_address = fromHex, to_address = toHex, amount = amountSun };
         var response = await _http.PostAsJsonAsync("/wallet/createtransaction", body);
         response.EnsureSuccessStatusCode();
 
-
         var json = await response.Content.ReadAsStringAsync();
+
+        // First, check if response contains "Error"
+        using (var doc = JsonDocument.Parse(json))
+        {
+            if (doc.RootElement.TryGetProperty("Error", out var errorElement))
+            {
+                throw new InvalidOperationException($"TronGrid error: {errorElement.GetString()}");
+            }
+        }
 
         var options = new JsonSerializerOptions
         {
@@ -44,7 +51,6 @@ public sealed class TronGridClient : ITronGridClient
 
         var tx = JsonSerializer.Deserialize<TronUnsignedTx>(json, options)
                 ?? throw new InvalidOperationException("Empty response from TronGrid");
-        
 
         using (var doc = JsonDocument.Parse(json))
         {
@@ -54,11 +60,8 @@ public sealed class TronGridClient : ITronGridClient
             }
         }
 
-
         return tx;
-
     }
-
     public async Task<TronBroadcastResponse> BroadcastTransactionAsync(object signedTx)
     {
         var response = await _http.PostAsJsonAsync("/wallet/broadcasttransaction", signedTx);

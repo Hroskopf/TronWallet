@@ -19,7 +19,6 @@ public class TronTransactionInfo
     [JsonPropertyName("receipt")]
     public TronReceipt? Receipt { get; set; }
 
-    // IMPORTANT
     [JsonPropertyName("result")]
     public string? Result { get; set; }
 

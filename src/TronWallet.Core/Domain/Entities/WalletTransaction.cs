@@ -20,4 +20,9 @@ public class WalletTransaction
     public DateTime CreatedAt { get; set; }
     public DateTime ConfirmedAt { get; set; }
 
+    public decimal GetAmountTrx()
+    {
+        return (decimal)(AmountSun / 1_000_000);
+    }
+
 }

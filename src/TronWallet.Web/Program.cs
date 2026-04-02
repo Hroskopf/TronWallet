@@ -17,6 +17,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorPages();
 builder.Services.AddSingleton<TronTransactionSigner>();
 
+builder.Services.AddHostedService<TransactionSyncService>();
+
+
 builder.Services.AddTronNet(options =>
 {
     options.Network = TronNetwork.MainNet;

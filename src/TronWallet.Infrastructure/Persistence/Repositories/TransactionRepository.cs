@@ -41,4 +41,50 @@ public class TransactionRepository : ITransactionRepository
         
     }
 
+    public async Task<List<WalletTransaction>> GetWalletsTransactionsAsync(Guid walletId)
+    {
+        var sql = @"
+            SELECT * FROM transactions
+            WHERE wallet_id = @WalletId
+            ORDER BY block_time DESC
+            LIMIT 100;
+        ";
+
+        using var conn = _factory.CreateConnection(); // your IDbConnection
+        var transactions = await conn.QueryAsync<WalletTransaction>(sql, new { WalletId = walletId });
+
+        return transactions.ToList();
+    }
+
+    public async Task<List<WalletTransaction>> GetPendingAsync()
+    {
+        var sql = "SELECT * FROM transactions WHERE status = @Status";
+
+        using var conn = _factory.CreateConnection();
+
+        var pendingTransactions = await conn.QueryAsync<WalletTransaction>(
+            sql,
+            new { Status = "PENDING" }
+        );
+        return pendingTransactions.AsList();
+    }
+
+    public async Task UpdateStatusAsync(Guid id, string status, long blockNumber, DateTime blockTime)
+    {
+        const string sql = @"
+            UPDATE transactions
+            SET status = @Status,
+                block_number = @BlockNumber,
+                block_time = @BlockTime
+            WHERE id = @Id";
+
+        using var conn = _factory.CreateConnection();
+        await conn.ExecuteAsync(sql, new
+        {
+            Id = id,
+            Status = status,
+            BlockNumber = blockNumber,
+            BlockTime = blockTime
+        });
+    }
 }
