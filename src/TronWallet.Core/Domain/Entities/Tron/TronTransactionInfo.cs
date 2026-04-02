@@ -1,15 +1,11 @@
-
+using System.Text.Json.Serialization;
+using System.Collections.Generic;
 
 namespace TronWallet.Core.Domain.Entities.Tron;
-
-using System;
-using System.Text.Json.Serialization;
-
 public class TronTransactionInfo
 {
-    // Transaction ID
     [JsonPropertyName("id")]
-    public string TxID { get; set; }
+    public string? TxID { get; set; }
 
     [JsonPropertyName("blockNumber")]
     public long BlockNumber { get; set; }
@@ -17,15 +13,22 @@ public class TronTransactionInfo
     [JsonPropertyName("blockTimeStamp")]
     public long BlockTimeStamp { get; set; }
 
-    [JsonPropertyName("receipt")]
-    public TronTransactionReceipt Receipt { get; set; }
+    [JsonPropertyName("contractResult")]
+    public List<string>? ContractResult { get; set; }
 
-    [JsonPropertyName("raw_data")]
-    public object RawData { get; set; } 
+    [JsonPropertyName("receipt")]
+    public TronReceipt? Receipt { get; set; }
+
+    // IMPORTANT
+    [JsonPropertyName("result")]
+    public string? Result { get; set; }
+
+    [JsonPropertyName("resMessage")]
+    public string? ResMessage { get; set; }
 }
 
-public class TronTransactionReceipt
+public class TronReceipt
 {
     [JsonPropertyName("result")]
-    public string Result { get; set; }
+    public string? Result { get; set; }
 }
