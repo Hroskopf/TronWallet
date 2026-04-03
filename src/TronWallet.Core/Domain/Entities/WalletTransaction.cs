@@ -22,7 +22,7 @@ public class WalletTransaction
 
     public decimal GetAmountTrx()
     {
-        return (decimal)(AmountSun / 1_000_000);
+        return (decimal)AmountSun / 1_000_000m;
     }
 
 }

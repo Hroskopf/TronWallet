@@ -47,4 +47,11 @@ public class WalletRepository : IWalletRepository
         return wallet;
     }
 
+    public async Task<List<Wallet>> GetAllAsync()
+    {
+        using var conn = _factory.CreateConnection(); 
+        var sql = "SELECT * FROM wallets";
+        var wallets = await conn.QueryAsync<Wallet>(sql);
+        return wallets.ToList();
+    }
 }

@@ -25,7 +25,7 @@ CREATE INDEX idx_wallets_tron_address ON wallets(tron_address);
 CREATE TABLE transactions (
     id            UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     wallet_id     UUID         NOT NULL REFERENCES wallets(id),
-    tx_hash       VARCHAR(128) UNIQUE,
+    tx_hash       VARCHAR(128),
     direction     VARCHAR(4)   NOT NULL CHECK (direction IN ('IN','OUT')),
     from_address  VARCHAR(64)  NOT NULL,
     to_address    VARCHAR(64)  NOT NULL,

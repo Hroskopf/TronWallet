@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TronWallet.Core.Interfaces.Services;
 using TronWallet.Core.Interfaces.Repositories;
 using Google.Rpc;
+using TronWallet.Core.Domain.Entities;
 
 namespace TronWallet.Infrastructure.Tron;
 
@@ -18,49 +19,104 @@ public sealed class TransactionSyncService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await SyncAsync();
+            await SyncPendingStatuses();
+            await SyncIncomingTransactionsAsync();
             await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken);
         }
     }
 
-    private async Task SyncAsync()
+    private async Task SyncIncomingTransactionsAsync()
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var walletRepo  = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
+        var txRepo      = scope.ServiceProvider.GetRequiredService<ITransactionRepository>();
+        var tronClient  = scope.ServiceProvider.GetRequiredService<ITronGridClient>();
+
+        var wallets = await walletRepo.GetAllAsync();
+        foreach (var wallet in wallets)
+        {
+            try
+            {
+                var txList = await tronClient.GetTransactionsAsync(wallet.TronAddress, limit: 20);
+
+                foreach (var tx in txList.Data)
+                {
+                    // Конвертуємо hex → Base58 для порівняння
+                    var toAddressBase58 = TronAddressService.HexToBase58(tx.ToAddressHex);
+
+                    // Пропускаємо outgoing — вони вже є в БД після відправки
+                    if (toAddressBase58 != wallet.TronAddress) continue;
+                    // Перевіряємо чи вже є в БД — головний захист від дублікатів
+                    if (await txRepo.ExistsInTxByHashAsync(tx.TxID)) continue;
+
+                    // Зберігаємо нову incoming транзакцію
+                    await txRepo.InsertAsync(new WalletTransaction
+                    {
+                        WalletId    = wallet.Id,
+                        TxHash      = tx.TxID,
+                        Direction   = "IN",
+                        FromAddress = TronAddressService.HexToBase58(tx.FromAddressHex),
+                        ToAddress   = wallet.TronAddress,
+                        AmountSun   = (long)tx.RawData.Contract[0].Parameter.Value.Amount,
+                        Status      = "CONFIRMED",  // одразу CONFIRMED, без PENDING
+                        BlockTime   = DateTimeOffset
+                                        .FromUnixTimeMilliseconds(tx.BlockTimeStamp)
+                                        .UtcDateTime,
+                        BlockNumber = tx.BlockNumber,
+                        RawData = "{}",
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                // _logger.LogError(ex, $"Failed to sync incoming txs for wallet {wallet.Tr}", wallet.TronAddress);
+            }
+        }
+    }
+    private async Task SyncPendingStatuses()
     {
         using var scope    = _scopeFactory.CreateScope();
         var txRepo         = scope.ServiceProvider.GetRequiredService<ITransactionRepository>();
         var tronClient     = scope.ServiceProvider.GetRequiredService<ITronGridClient>();
 
         var pending = await txRepo.GetPendingAsync();
-        Console.WriteLine(pending.Count);
         foreach (var tx in pending)
         {
-            if (string.IsNullOrWhiteSpace(tx.TxHash)) continue;
-            Console.WriteLine(tx.Id);
-            var info = await tronClient.GetTransactionInfoAsync(tx.TxHash!);
-            string status;
-            if (info?.BlockNumber is null or 0) // still pending
-            {
-                continue;
-            }
-            else if (info.Result == "FAILED")
-            {
-                status = "FAILED";
-            }
-            else if (info.Receipt?.Result == "REVERT" || info.Receipt?.Result == "FAILED")
-            {
-                status = "FAILED";
-            }
-            else
-            {
-                status = "CONFIRMED";
-            }
+            try {
+                if (string.IsNullOrWhiteSpace(tx.TxHash)) continue;
+                var info = await tronClient.GetTransactionInfoAsync(tx.TxHash!);
+                string status;
+                if (info?.BlockNumber is null or 0) // still pending
+                {
+                    continue;
+                }
+                else if (info.Result == "FAILED")
+                {
+                    status = "FAILED";
+                }
+                else if (info.Receipt?.Result == "REVERT" || info.Receipt?.Result == "FAILED")
+                {
+                    status = "FAILED";
+                }
+                else
+                {
+                    status = "CONFIRMED";
+                }
 
 
-            await txRepo.UpdateStatusAsync(
-                tx.Id, 
-                status,
-                info.BlockNumber,
-                DateTimeOffset.FromUnixTimeMilliseconds(info.BlockTimeStamp).UtcDateTime
-            );
+                await txRepo.UpdateStatusAsync(
+                    tx.Id, 
+                    status,
+                    info.BlockNumber,
+                    DateTimeOffset.FromUnixTimeMilliseconds(info.BlockTimeStamp).UtcDateTime,
+                    tx.CreatedAt
+                );
+            }
+            catch(Exception ex)
+            {
+                // _logger.LogError(ex, $"Failed to sync pending txs for tx {tx.TxID}", wallet.TronAddress);
+                
+            }
         }
     }
 }

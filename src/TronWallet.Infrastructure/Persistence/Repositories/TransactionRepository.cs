@@ -17,27 +17,17 @@ public class TransactionRepository : ITransactionRepository
 
     public async Task<Guid> InsertAsync(WalletTransaction tx)
     {
-        using var conn = _factory.CreateConnection();
 
         var sql = @"
             INSERT INTO transactions 
-            (wallet_id, tx_hash, direction, from_address, to_address, amount_sun, block_number, block_time, raw_data)
+            (wallet_id, tx_hash, direction, from_address, to_address, amount_sun, block_number, block_time, raw_data, status)
             VALUES 
-            (@WalletId, @TxHash, @Direction, @FromAddress, @ToAddress, @AmountSun, @BlockNumber, @BlockTime, @RawData::jsonb)
+            (@WalletId, @TxHash, @Direction, @FromAddress, @ToAddress, @AmountSun, @BlockNumber, @BlockTime, @RawData::jsonb, @Status)
             RETURNING id;
             ";
-        return await conn.QuerySingleAsync<Guid>(sql, new
-        {
-            WalletId = tx.WalletId,
-            TxHash = tx.TxHash, 
-            Direction = tx.Direction,
-            FromAddress = tx.FromAddress,
-            ToAddress = tx.ToAddress,
-            AmountSun = tx.AmountSun,
-            BlockNumber = tx.BlockNumber,
-            BlockTime = tx.BlockTime, 
-            RawData = tx.RawData
-        });
+        using var conn = _factory.CreateConnection();
+        var result = await conn.QuerySingleAsync<Guid>(sql, tx);
+        return result;
         
     }
 
@@ -46,12 +36,15 @@ public class TransactionRepository : ITransactionRepository
         var sql = @"
             SELECT * FROM transactions
             WHERE wallet_id = @WalletId
-            ORDER BY block_time DESC
+            ORDER BY created_at DESC
             LIMIT 100;
         ";
 
-        using var conn = _factory.CreateConnection(); // your IDbConnection
-        var transactions = await conn.QueryAsync<WalletTransaction>(sql, new { WalletId = walletId });
+        using var conn = _factory.CreateConnection();
+        var transactions = await conn.QueryAsync<WalletTransaction>(
+            sql, 
+            new { WalletId = walletId }
+        );
 
         return transactions.ToList();
     }
@@ -69,13 +62,14 @@ public class TransactionRepository : ITransactionRepository
         return pendingTransactions.AsList();
     }
 
-    public async Task UpdateStatusAsync(Guid id, string status, long blockNumber, DateTime blockTime)
+    public async Task UpdateStatusAsync(Guid id, string status, long blockNumber, DateTime blockTime, DateTime createdAt)
     {
         const string sql = @"
             UPDATE transactions
             SET status = @Status,
                 block_number = @BlockNumber,
-                block_time = @BlockTime
+                block_time = @BlockTime,
+                created_at = @CreatedAt
             WHERE id = @Id";
 
         using var conn = _factory.CreateConnection();
@@ -84,7 +78,17 @@ public class TransactionRepository : ITransactionRepository
             Id = id,
             Status = status,
             BlockNumber = blockNumber,
-            BlockTime = blockTime
+            BlockTime = blockTime,
+            CreatedAt = createdAt
         });
     }
+    public async Task<bool> ExistsInTxByHashAsync(string txHash)
+    {
+        
+        var sql = "SELECT EXISTS (SELECT 1 FROM transactions WHERE tx_hash = @txHash AND direction = 'IN')";
+        using var conn = _factory.CreateConnection();
+        var result = await conn.ExecuteScalarAsync<bool>(sql, new { TxHash = txHash });
+        return result;
+    }
+
 }
