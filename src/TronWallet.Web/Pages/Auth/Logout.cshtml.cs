@@ -21,7 +21,7 @@ public class LogoutModel : PageModel
     {
         await _authService.Logout();
         
-        return RedirectToPage("/Auth/Login");
+        return RedirectToPage("/Index");
 
     }
 }
