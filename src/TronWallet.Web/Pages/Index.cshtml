@@ -1,10 +1,56 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Welcome";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p> Auth: @Model.IsAuthenticated </p>
+<!-- Hero Section -->
+<div class="container-fluid bg-primary text-white py-5 mb-5">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold">Welcome to WalletApp</h1>
+        <p class="lead">Securely manage your TRON wallet and track transactions with ease.</p>
+        <a asp-page="/Auth/Register" class="btn btn-light btn-lg mt-3 me-2">Create a wallet</a>
+        <a asp-page="/Auth/Login" class="btn btn-outline-light btn-lg mt-3">Login</a>
+    </div>
 </div>
+
+<!-- Features -->
+<div class="container">
+    <div class="row text-center g-4">
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Fast Transactions</h5>
+                    <p class="card-text">
+                        Send and receive TRX instantly using the TRON blockchain.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Secure Wallet</h5>
+                    <p class="card-text">
+                        Your private keys are encrypted and safely stored.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Full History</h5>
+                    <p class="card-text">
+                        Track all incoming and outgoing transactions in one place.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
