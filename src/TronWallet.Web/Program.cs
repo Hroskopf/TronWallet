@@ -46,6 +46,8 @@ builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
+builder.Services.AddScoped<IWalletService, WalletService>();
+
 
 builder.Services.AddScoped<ITronAddressService, TronAddressService>();
 builder.Services.AddSingleton<IEncryptionService>(sp =>

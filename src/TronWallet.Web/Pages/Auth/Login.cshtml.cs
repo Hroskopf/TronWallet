@@ -8,7 +8,6 @@ public class LoginModel : PageModel
 {
 
 
-    private readonly ILogger<LoginModel> _logger;
     private readonly IAuthService _authService;
 
     public string? ErrorMessage { get; set; }
@@ -21,9 +20,8 @@ public class LoginModel : PageModel
     [Required(ErrorMessage = "Enter the password")]
     public string? Password { get; set; }
 
-    public LoginModel(IAuthService authService, ILogger<LoginModel> logger)
+    public LoginModel(IAuthService authService)
     {
-        _logger = logger;
         _authService = authService;
     }
     public void OnGet()

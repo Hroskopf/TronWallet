@@ -14,25 +14,23 @@ namespace TronWallet.Web.Pages.Cabinet;
 [Authorize]
 public class DashboardModel : PageModel
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IWalletRepository _walletRepository;
+    private readonly IWalletService _walletService;
     private readonly ITronGridClient _tronGridClient;
-    public User UserInfo { get; set; }
+    public string Username { get; set; }
     public Wallet Wallet { get; set; }
     public decimal? Balance { get; set; } = 0;
 
-    public DashboardModel(IUserRepository userRepository, IWalletRepository walletRepository, ITronGridClient tronGridClient)
+    public DashboardModel(IWalletService walletService, ITronGridClient tronGridClient)
     {
-        _walletRepository = walletRepository;
-        _userRepository = userRepository;
+        _walletService = walletService;
         _tronGridClient = tronGridClient;
     }
     public async Task OnGetAsync()
     {
         var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        Username = User.FindFirst(ClaimTypes.Name)?.Value;
 
-        UserInfo = await _userRepository.FindUserByIdAsync(userId);
-        Wallet = await _walletRepository.GetWalletByUserIdAsync(userId);
+        Wallet = await _walletService.GetWalletByUserIdAsync(userId);
         
         var response =  await _tronGridClient.GetAccountAsync(Wallet.TronAddress);
         if(response == null || response.Account == null)

@@ -14,19 +14,19 @@ namespace TronWallet.Web.Pages.Cabinet;
 [Authorize]
 public class ReceiveModel : PageModel
 {
-    private readonly IWalletRepository _walletRepository;
+    private readonly IWalletService _walletService;
     public string WalletAddress { get; set; }
 
-    public ReceiveModel(IWalletRepository walletRepository)
+    public ReceiveModel(IWalletService walletService)
     {
-        _walletRepository = walletRepository;
+        _walletService = walletService;
     }
 
     public async Task OnGetAsync()
     {
         var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
-        var wallet = await _walletRepository.GetWalletByUserIdAsync(userId);
+        var wallet = await _walletService.GetWalletByUserIdAsync(userId);
         WalletAddress = wallet.TronAddress;
 
     }

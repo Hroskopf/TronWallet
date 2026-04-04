@@ -8,7 +8,7 @@
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10">
 
-            <h1 class="mb-4 text-center">Welcome, @Model.UserInfo.Username!</h1>
+            <h1 class="mb-4 text-center">Welcome, @Model.Username!</h1>
 
             <!-- Wallet Info -->
             <div class="card shadow-sm mb-4">
@@ -29,46 +29,6 @@
                     <a class="btn btn-secondary" href="/Cabinet/Receive">Receive TRX</a>
                 </div>
             </div>
-
-            <!-- Recent Transactions -->
-            @* <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">Recent Transactions</h5>
-
-                    @if (Model.RecentTransactions != null && Model.RecentTransactions.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Type</th>
-                                        <th>Amount</th>
-                                        <th>To/From</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var tx in Model.RecentTransactions)
-                                    {
-                                        <tr>
-                                            <td>@tx.Date.ToString("g")</td>
-                                            <td>@tx.Type</td>
-                                            <td>@tx.Amount</td>
-                                            <td>@tx.Counterparty</td>
-                                            <td>@tx.Status</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="text-muted">No recent transactions</p>
-                    }
-                </div>
-            </div> *@
 
         </div>
     </div>

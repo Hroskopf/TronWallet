@@ -9,12 +9,10 @@ namespace TronWallet.Web.Pages.Auth;
 public class LogoutModel : PageModel
 {
 
-    private readonly ILogger<LogoutModel> _logger;
     private readonly IAuthService _authService;
-    public LogoutModel(IAuthService authService, ILogger<LogoutModel> logger)
+    public LogoutModel(IAuthService authService)
     {
         _authService = authService;
-        _logger = logger;
     }
 
     public async Task<IActionResult> OnPostAsync()

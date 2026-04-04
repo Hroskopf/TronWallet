@@ -40,7 +40,6 @@ public class RegisterModel : PageModel
     public async Task<IActionResult> OnPostAsync()
     {
 
-
         // Server-side validation
         if (!ModelState.IsValid)
         {

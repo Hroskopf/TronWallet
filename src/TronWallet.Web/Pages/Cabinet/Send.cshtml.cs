@@ -18,7 +18,7 @@ namespace TronWallet.Web.Pages.Cabinet;
 public class SendModel : PageModel
 {
     private readonly ITronGridClient _tronGridClient;
-    private readonly IWalletRepository _walletRepository;
+    private readonly IWalletService _walletService;
     private readonly IEncryptionService _encryptionService;
     private readonly ITronAddressService _tronAdressService;
     private readonly TronTransactionSigner _tronTransactionSigner;
@@ -37,10 +37,10 @@ public class SendModel : PageModel
     public string? Error { get; set; }
     public BigInteger TODO { get; private set; }
 
-    public SendModel(ITronGridClient tronGridClient, IWalletRepository walletRepository, IEncryptionService encryptionService, ITronAddressService tronAdressService, TronTransactionSigner tronTransactionSigner, ITransactionRepository transactionRepository)
+    public SendModel(ITronGridClient tronGridClient, IWalletService walletService, IEncryptionService encryptionService, ITronAddressService tronAdressService, TronTransactionSigner tronTransactionSigner, ITransactionRepository transactionRepository)
     {
         _tronGridClient = tronGridClient;
-        _walletRepository = walletRepository;
+        _walletService = _walletService;
         _encryptionService = encryptionService;
         _tronAdressService = tronAdressService;
         _tronTransactionSigner = tronTransactionSigner;
@@ -65,7 +65,7 @@ public class SendModel : PageModel
                 return Page();
             }
 
-            var wallet = await _walletRepository.GetWalletByUserIdAsync(userId);
+            var wallet = await _walletService.GetWalletByUserIdAsync(userId);
 
             if (wallet == null)
             {
