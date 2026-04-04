@@ -1,53 +1,88 @@
-// using TronWallet.Core.Interfaces.Services;
-// using TronWallet.Core.Interfaces.Repositories;
-// using TronWallet.Core.Domain.Entities;
+using TronWallet.Core.Interfaces.Services;
+using TronWallet.Core.Interfaces.Repositories;
+using TronWallet.Core.Domain.Entities;
 
-// namespace TronWallet.Core.Services;
+namespace TronWallet.Core.Services;
 
-// public class TransactionService : ITransactionService
-// {
-//     private readonly IWalletRepository _walletRepository;
-//     private readonly ITransactionRepository _transactionRepository;
-//     private readonly ITronAddressService _tronService; // for sending on-chain
+public class TransactionService : ITransactionService
+{
+    private readonly IWalletRepository _walletRepository;
+    private readonly ITronGridClient _tronGridClient;
+    private readonly IEncryptionService _encryptionService;
+    private readonly ITronAddressService _tronAdressService;
+    private readonly ITransactionSigner _transactionSigner;
+    private readonly ITransactionRepository _transactionRepository;
 
-//     public TransactionService(
-//         IWalletRepository walletRepository,
-//         ITransactionRepository transactionRepository,
-//         ITronAddressService tronService)
-//     {
-//         _walletRepository = walletRepository;
-//         _transactionRepository = transactionRepository;
-//         _tronService = tronService;
-//     }
+        public TransactionService(ITronGridClient tronGridClient, IWalletRepository walletRepository, IEncryptionService encryptionService, ITronAddressService tronAdressService, ITransactionSigner transactionSigner, ITransactionRepository transactionRepository)
+    {
+        _tronGridClient = tronGridClient;
+        _walletRepository = walletRepository;
+        _encryptionService = encryptionService;
+        _tronAdressService = tronAdressService;
+        _transactionSigner = transactionSigner;
+        _transactionRepository = transactionRepository;
+    }
 
-//     public async Task<List<WalletTransaction>> GetWalletTransactionsAsync(Guid walletId)
-//     {
-//         return await _transactionRepository.GetByWalletIdAsync(walletId);
-//     }
+    public async Task<List<WalletTransaction>> GetWalletsTransactionsAsync(Guid walletId)
+    {
+        return await _transactionRepository.GetWalletsTransactionsAsync(walletId);
+    }
 
-//     public async Task<WalletTransaction> SendTransactionAsync(Guid fromUserId, string toAddress, decimal amount)
-//     {
-//         var wallet = await _walletRepository.GetWalletByUserIdAsync(fromUserId);
+    public async Task SendTransactionAsync(Guid fromUserId, string toAddress, decimal amountTrx)
+    {
+        var wallet = await _walletRepository.GetWalletByUserIdAsync(fromUserId);
 
-//         if (wallet == null)
-//             throw new Exception("Wallet not found");
+        if (wallet == null)
+        {
+            throw new Exception("Cannot find the wallet");
+        }
+        var balanceTRX = (await _tronGridClient.GetAccountAsync(wallet.TronAddress))?.Account?.GetBalanceInTRX() ?? 0m;            
 
-//         // Use Tron service to create & broadcast transaction
-//         var txHash = await _tronService.SendAsync(wallet.PrivateKeyEnc, toAddress, amount);
+        if(balanceTRX < amountTrx)
+        {
+            throw new Exception("Not enough TRX on the balance");
+        }
 
-//         // Save transaction in DB
-//         var tx = new WalletTransaction
-//         {
-//             Id = Guid.NewGuid(),
-//             WalletId = wallet.Id,
-//             ToAddress = toAddress,
-//             Amount = amount,
-//             TxHash = txHash,
-//             CreatedAt = DateTime.UtcNow
-//         };
 
-//         await _transactionRepository.InsertAsync(tx);
+        var privateKeyHex = _encryptionService.Decrypt(wallet.PrivateKeyEnc);
 
-//         return tx;
-//     }
-// }
+        var toAddressHex = _tronAdressService.Base58ToHex(toAddress);
+        var fromAddressHex = _tronAdressService.Base58ToHex(wallet.TronAddress);
+
+        if(toAddressHex == fromAddressHex)
+        {
+            throw new Exception("You cannot send to yourself");
+        }
+
+        long amountSun = (long)(amountTrx * 1000000);
+
+        var unsignedTx = await _tronGridClient.CreateTransactionAsync(fromAddressHex, toAddressHex, amountSun);
+
+        var txSign = _transactionSigner.Sign(unsignedTx.RawDataHex, privateKeyHex);
+        privateKeyHex = null;
+        var broadcastResponse = await _tronGridClient.BroadcastTransactionAsync(new
+        {
+            txID = unsignedTx.TxID,
+            raw_data = unsignedTx.RawData,
+            raw_data_hex = unsignedTx.RawDataHex,
+            signature = new List<string> { txSign }
+        });
+        if(!broadcastResponse.Result)
+        {
+            throw new Exception("Oops something went wrong");
+        }
+
+        var txHash = unsignedTx.GetTxHash();
+        
+        await _transactionRepository.InsertAsync(new WalletTransaction
+        {
+            WalletId = wallet.Id,
+            TxHash = txHash,
+            FromAddress = wallet.TronAddress,
+            ToAddress = toAddress,
+            AmountSun = amountSun,
+            RawData = unsignedTx.RawDataStr
+        });
+
+    }
+}

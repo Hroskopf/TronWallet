@@ -17,12 +17,7 @@ namespace TronWallet.Web.Pages.Cabinet;
 [Authorize]
 public class SendModel : PageModel
 {
-    private readonly ITronGridClient _tronGridClient;
-    private readonly IWalletService _walletService;
-    private readonly IEncryptionService _encryptionService;
-    private readonly ITronAddressService _tronAdressService;
-    private readonly TronTransactionSigner _tronTransactionSigner;
-    private readonly ITransactionRepository _transactionRepository;
+    private readonly ITransactionService _transactionService;
 
     [BindProperty]
     [Required]
@@ -37,14 +32,9 @@ public class SendModel : PageModel
     public string? Error { get; set; }
     public BigInteger TODO { get; private set; }
 
-    public SendModel(ITronGridClient tronGridClient, IWalletService walletService, IEncryptionService encryptionService, ITronAddressService tronAdressService, TronTransactionSigner tronTransactionSigner, ITransactionRepository transactionRepository)
+    public SendModel(ITransactionService transactionService)
     {
-        _tronGridClient = tronGridClient;
-        _walletService = _walletService;
-        _encryptionService = encryptionService;
-        _tronAdressService = tronAdressService;
-        _tronTransactionSigner = tronTransactionSigner;
-        _transactionRepository = transactionRepository;
+        _transactionService = transactionService;
     }
     public void OnGet()
     {
@@ -64,62 +54,8 @@ public class SendModel : PageModel
                 Error = "User not authenticated";
                 return Page();
             }
+            await _transactionService.SendTransactionAsync(userId, ToAddress, AmountTRX);
 
-            var wallet = await _walletService.GetWalletByUserIdAsync(userId);
-
-            if (wallet == null)
-            {
-                Error = "Wallet not found";
-                return Page();
-            }
-            var balanceTRX = (await _tronGridClient.GetAccountAsync(wallet.TronAddress))?.Account?.GetBalanceInTRX() ?? 0m;            
-
-            if(balanceTRX < AmountTRX)
-            {
-                Error = "Not enough TRX on the balance";
-                return Page();
-            }
-
-            var privateKeyHex = _encryptionService.Decrypt(wallet.PrivateKeyEnc);
-
-            var toAddressHex = _tronAdressService.Base58ToHex(ToAddress);
-            var fromAddressHex = _tronAdressService.Base58ToHex(wallet.TronAddress);
-
-            if(toAddressHex == fromAddressHex)
-            {
-                throw new Exception("You cannot send to yourself");
-            }
-
-            var unsignedTx = await _tronGridClient.CreateTransactionAsync(fromAddressHex, toAddressHex, (long)(AmountTRX * 1000000));
-
-            var txSign = _tronTransactionSigner.Sign(unsignedTx.RawDataHex, privateKeyHex);
-            privateKeyHex = null;
-            var broadcastResponse = await _tronGridClient.BroadcastTransactionAsync(new
-            {
-                txID = unsignedTx.TxID,
-                raw_data = unsignedTx.RawData,
-                raw_data_hex = unsignedTx.RawDataHex,
-                signature = new List<string> { txSign }
-            });
-            if(!broadcastResponse.Result)
-            {
-                throw new Exception("Oops something went wrong");
-            }
-
-            var txHash = unsignedTx.GetTxHash();
-            
-            await _transactionRepository.InsertAsync(new WalletTransaction
-            {
-                WalletId = wallet.Id,
-                TxHash = txHash,
-                FromAddress = wallet.TronAddress,
-                ToAddress = ToAddress,
-                AmountSun = (long)(AmountTRX * 1_000_000m),
-                RawData = unsignedTx.RawDataStr
-            });
-
-
-            Message = $"Transaction sent! TX ID: {unsignedTx.TxID}";
         }
         catch (Exception ex)
         {

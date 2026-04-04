@@ -6,12 +6,13 @@ using TronNet;
 using TronNet.Crypto;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
+using TronWallet.Core.Interfaces.Services;
 
 
 
 namespace TronWallet.Infrastructure.Tron;
 
-public class TronTransactionSigner
+public class TronTransactionSigner : ITransactionSigner
 {
 
     private static string BytesToHex(byte[] bytes)

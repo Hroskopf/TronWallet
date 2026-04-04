@@ -15,7 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
-builder.Services.AddSingleton<TronTransactionSigner>();
 
 builder.Services.AddHostedService<TransactionSyncService>();
 
@@ -41,12 +40,15 @@ builder.Services.AddSingleton<DbConnectionFactory>(sp =>
     return new DbConnectionFactory(connectionString);
 });
 
+builder.Services.AddScoped<ITransactionSigner, TronTransactionSigner>();
+
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 builder.Services.AddScoped<IWalletService, WalletService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
 
 
 builder.Services.AddScoped<ITronAddressService, TronAddressService>();

@@ -11,13 +11,13 @@ namespace TronWallet.Web.Pages.Cabinet;
 [Authorize]
 public class HistoryModel : PageModel
 {
-    private readonly ITransactionRepository _transactionRepository;
+    private readonly ITransactionService _transactionService;
     private readonly IWalletService _walletService;
     public List<WalletTransaction> Transactions { get; set; } = new();
 
-    public HistoryModel(ITransactionRepository transactionRepository, IWalletService walletService)
+    public HistoryModel(ITransactionService transactionService, IWalletService walletService)
     {
-        _transactionRepository = transactionRepository;
+        _transactionService = transactionService;
         _walletService = walletService;
     }
     
@@ -27,7 +27,7 @@ public class HistoryModel : PageModel
 
         var wallet = await _walletService.GetWalletByUserIdAsync(userId);
 
-        Transactions = await _transactionRepository.GetWalletsTransactionsAsync(wallet.Id);
+        Transactions = await _transactionService.GetWalletsTransactionsAsync(wallet.Id);
     }
 }
 
