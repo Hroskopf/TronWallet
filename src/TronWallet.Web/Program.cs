@@ -44,6 +44,7 @@ builder.Services.AddSingleton<DbConnectionFactory>(sp =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 
 builder.Services.AddScoped<ITronAddressService, TronAddressService>();
