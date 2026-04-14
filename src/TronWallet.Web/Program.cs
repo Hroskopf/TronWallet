@@ -25,10 +25,13 @@ builder.Services.AddTronNet(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
+
+var tronConfig = builder.Configuration.GetSection("TronGrid");
 builder.Services.AddHttpClient("TronGrid", client =>
 {
-    client.BaseAddress = new Uri("https://api.shasta.trongrid.io/");
+    client.BaseAddress = new Uri(tronConfig["BaseUrl"]);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", tronConfig["ApiKey"]);
 });
 
 builder.Services.AddSingleton<DbConnectionFactory>(sp =>
@@ -70,14 +73,16 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Auth/Login";
-        options.AccessDeniedPath = "/Auth/Login";
-        options.LogoutPath = "/Auth/Logout"; 
-        options.ExpireTimeSpan = TimeSpan.FromHours(1);
-        options.SlidingExpiration = true;
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+
+        options.LoginPath           = "/Auth/Login";
+        options.AccessDeniedPath    = "/Auth/Login";
+        options.LogoutPath = "/Auth/Logout";
+        options.ExpireTimeSpan      = TimeSpan.FromMinutes(30);
+        options.SlidingExpiration   = true;
+        options.Cookie.HttpOnly     = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite     = SameSiteMode.Strict;
+
     });
 
 builder.Services.AddAuthorization();
