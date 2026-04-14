@@ -108,8 +108,7 @@ public sealed class TransactionSyncService : BackgroundService
                     tx.Id, 
                     status,
                     info.BlockNumber,
-                    DateTimeOffset.FromUnixTimeMilliseconds(info.BlockTimeStamp).UtcDateTime,
-                    tx.CreatedAt
+                    DateTimeOffset.FromUnixTimeMilliseconds(info.BlockTimeStamp).UtcDateTime
                 );
             }
             catch(Exception ex)

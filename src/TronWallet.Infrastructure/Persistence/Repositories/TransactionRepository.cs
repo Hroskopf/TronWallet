@@ -62,14 +62,13 @@ public class TransactionRepository : ITransactionRepository
         return pendingTransactions.AsList();
     }
 
-    public async Task UpdateStatusAsync(Guid id, string status, long blockNumber, DateTime blockTime, DateTime createdAt)
+    public async Task UpdateStatusAsync(Guid id, string status, long blockNumber, DateTime blockTime)
     {
         const string sql = @"
             UPDATE transactions
             SET status = @Status,
                 block_number = @BlockNumber,
-                block_time = @BlockTime,
-                created_at = @CreatedAt
+                block_time = @BlockTime
             WHERE id = @Id";
 
         using var conn = _factory.CreateConnection();
@@ -79,7 +78,6 @@ public class TransactionRepository : ITransactionRepository
             Status = status,
             BlockNumber = blockNumber,
             BlockTime = blockTime,
-            CreatedAt = createdAt
         });
     }
     public async Task<bool> ExistsInTxByHashAsync(string txHash)
