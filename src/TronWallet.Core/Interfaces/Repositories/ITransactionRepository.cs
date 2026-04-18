@@ -9,4 +9,5 @@ public interface ITransactionRepository
     Task<List<WalletTransaction>> GetPendingAsync();
     Task UpdateStatusAsync(Guid id, string status, long BlockNumber, DateTime BlockTime);
     Task<bool> ExistsInTxByHashAsync(string txHash);
+    Task<int> GetWalletTransactionsCountAsync(Guid walletId);
 }

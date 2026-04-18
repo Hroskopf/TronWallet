@@ -9,10 +9,10 @@
     <div class="card shadow-sm">
         <div class="card-body">
 
-            <h3 class="card-title mb-4">Transaction History</h3>
+            <h3 class="card-title mb-4 text-center">Transaction History</h3>
 
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle text-center">
                     <thead class="table-light">
                         <tr>
                             <th>Type</th>
@@ -26,77 +26,197 @@
                     </thead>
 
                     <tbody>
-                    @foreach (var tx in Model.Transactions)
+                    @if (Model.Transactions.Any())
                     {
-                        var isIncoming = tx.Direction == "IN";
+                        foreach (var tx in Model.Transactions)
+                        {
+                            var isIncoming = tx.Direction == "IN";
 
+                            <tr>
+
+                                <!-- Type -->
+                                <td>
+                                    <span class="badge @(isIncoming ? "bg-success" : "bg-danger")">
+                                        @(isIncoming ? "Incoming" : "Outgoing")
+                                    </span>
+                                </td>
+
+                                <!-- Amount -->
+                                <td class="fw-bold @(isIncoming ? "text-success" : "text-danger")">
+                                    @(isIncoming ? "+" : "-") @tx.GetAmountTrx() TRX
+                                </td>
+
+                                <!-- From -->
+                                <td class="text-muted font-monospace">
+                                    @tx.FromAddress
+                                </td>
+
+                                <!-- To -->
+                                <td class="text-muted font-monospace">
+                                    @tx.ToAddress
+                                </td>
+
+                                <!-- Status -->
+                                <td>
+                                    @if (tx.Status == "CONFIRMED")
+                                    {
+                                        <span class="badge bg-success">Confirmed</span>
+                                    }
+                                    else if (tx.Status == "PENDING")
+                                    {
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Failed</span>
+                                    }
+                                </td>
+
+                                <!-- Time -->
+                                <td>
+                                    <small class="text-muted">
+                                        @tx.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                                    </small>
+                                </td>
+
+                                <!-- Tx link -->
+                                <td>
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       href="https://shasta.tronscan.org/#/transaction/@tx.TxHash"
+                                       target="_blank">
+                                        View
+                                    </a>
+                                </td>
+
+                            </tr>
+                        }
+                    }
+                    else
+                    {
                         <tr>
-                            <!-- Type -->
-                            <td>
-                                <span class="badge @(isIncoming ? "bg-success" : "bg-danger")">
-                                    @(isIncoming ? "Incoming" : "Outgoing")
-                                </span>
-                            </td>
-
-                            <!-- Amount -->
-                            <td class="fw-bold @(isIncoming ? "text-success" : "text-danger")">
-                                @(isIncoming ? "+" : "-") @tx.GetAmountTrx() TRX
-                            </td>
-
-                            <!-- From -->
-                            <td class="text-muted">
-                                @tx.FromAddress
-                            </td>
-
-                            <!-- To -->
-                            <td class="text-muted">
-                                @tx.ToAddress
-                            </td>
-
-                            <!-- Status -->
-                            <td>
-                                @if (tx.Status == "CONFIRMED")
-                                {
-                                    <span class="badge bg-success">Confirmed</span>
-                                }
-                                else if (tx.Status == "PENDING")
-                                {
-                                    <span class="badge bg-warning text-dark">Pending</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">Failed</span>
-                                }
-                            </td>
-
-                            <!-- Time -->
-                            <td>
-                                <small class="text-muted">
-                                    @tx.CreatedAt.ToString("yyyy-MM-dd HH:mm")
-                                </small>
-                            </td>
-
-                            <!-- Tx link -->
-                            <td>
-                                <a class="btn btn-sm btn-outline-primary"
-                                   href="https://shasta.tronscan.org/#/transaction/@tx.TxHash"
-                                   target="_blank">
-                                    View
-                                </a>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                No transactions yet.
                             </td>
                         </tr>
                     }
                     </tbody>
+
                 </table>
             </div>
 
-            @if (!Model.Transactions.Any())
+            <!-- PAGINATION -->
+            @if (Model.TotalPages > 1)
             {
-                <div class="text-center text-muted mt-4">
-                    No transactions yet.
-                </div>
+                <nav class="mt-4">
+                    <ul class="pagination justify-content-center">
+
+                        <!-- Previous -->
+                        <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                            <a class="page-link"
+                               href="?page=@(Model.Page - 1)">
+                                Previous
+                            </a>
+                        </li>
+
+                        <!-- Page numbers -->
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.Page ? "active" : "")">
+                                <a class="page-link" href="?page=@i">
+                                    @i
+                                </a>
+                            </li>
+                        }
+
+                        <!-- Next -->
+                        <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link"
+                               href="?page=@(Model.Page + 1)">
+                                Next
+                            </a>
+                        </li>
+
+                    </ul>
+                </nav>
             }
 
         </div>
     </div>
+
 </div>
+
+<script>
+let currentPage = @Model.Page;
+
+async function refreshTransactions() {
+    try {
+        const res = await fetch(`/Cabinet/History?handler=Data&page=${currentPage}`);
+        const data = await res.json();
+
+        const tbody = document.querySelector("tbody");
+
+        if (!data.transactions || data.transactions.length === 0) return;
+
+        tbody.innerHTML = "";
+
+        data.transactions.forEach(tx => {
+
+            const isIncoming = tx.direction === "IN";
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <span class="badge ${isIncoming ? "bg-success" : "bg-danger"}">
+                            ${isIncoming ? "Incoming" : "Outgoing"}
+                        </span>
+                    </td>
+
+                    <td class="${isIncoming ? "text-success" : "text-danger"} fw-bold">
+                        ${isIncoming ? "+" : "-"} ${tx.amount} TRX
+                    </td>
+
+                    <td class="text-muted font-monospace">
+                        ${tx.fromAddress ?? ""}
+                    </td>
+
+                    <td class="text-muted font-monospace">
+                        ${tx.toAddress ?? ""}
+                    </td>
+
+                    <td>
+                        <span class="badge ${
+                            tx.status === "CONFIRMED"
+                                ? "bg-success"
+                                : tx.status === "PENDING"
+                                ? "bg-warning text-dark"
+                                : "bg-danger"
+                        }">
+                            ${tx.status}
+                        </span>
+                    </td>
+
+                    <td>
+                        <small class="text-muted">
+                            ${new Date(tx.createdAt).toLocaleString()}
+                        </small>
+                    </td>
+
+                    <td>
+                        <a class="btn btn-sm btn-outline-primary"
+                           target="_blank"
+                           href="https://shasta.tronscan.org/#/transaction/${tx.txHash}">
+                            View
+                        </a>
+                    </td>
+                </tr>
+            `;
+        });
+
+    } catch (err) {
+        console.error("Failed to refresh transactions", err);
+    }
+}
+
+// poll every 15 seconds
+setInterval(refreshTransactions, 15000);
+</script>

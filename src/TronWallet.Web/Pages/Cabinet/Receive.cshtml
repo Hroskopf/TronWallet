@@ -11,13 +11,26 @@
             <h4 class="card-title mb-3">Receive Funds</h4>
             <p class="text-muted">Scan the QR code or copy your wallet address</p>
 
-            <!-- QR -->
-            <div id="qrcode" class="d-inline-block p-3 bg-white border rounded"></div>
+            <!-- QR (CLICKABLE) -->
+            <a href="https://shasta.tronscan.org/#/address/@Model.WalletAddress"
+               target="_blank"
+               class="d-inline-block p-3 bg-white border rounded text-decoration-none"
+               style="cursor:pointer;">
+
+                <div id="qrcode"></div>
+
+                <div class="small text-muted mt-2">
+                    Open in Tronscan
+                </div>
+
+            </a>
 
             <!-- Address -->
             <div class="mt-3">
-                <input type="text" class="form-control text-center" 
-                       value="@Model.WalletAddress" readonly id="walletInput" />
+                <input type="text" class="form-control text-center"
+                       value="@Model.WalletAddress"
+                       readonly
+                       id="walletInput" />
             </div>
 
             <!-- Copy button -->

@@ -96,4 +96,20 @@ public class TransactionRepository : ITransactionRepository
         return result;
     }
 
+    public async Task<int> GetWalletTransactionsCountAsync(Guid walletId)
+{
+    var sql = @"
+        SELECT COUNT(*)
+        FROM transactions
+        WHERE wallet_id = @WalletId;
+    ";
+
+    using var conn = _factory.CreateConnection();
+
+    return await conn.ExecuteScalarAsync<int>(
+        sql,
+        new { WalletId = walletId }
+    );
+}
+
 }

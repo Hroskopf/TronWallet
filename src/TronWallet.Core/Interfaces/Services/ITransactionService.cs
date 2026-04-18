@@ -6,4 +6,5 @@ public interface ITransactionService
 {
     Task SendTransactionAsync(Guid fromUserId, string toAddress, decimal amountTrx);
     Task<List<WalletTransaction>> GetWalletsTransactionsAsync(Guid walletId, int limit = 50, int offset = 0);
+    Task<int> GetWalletTransactionsCountAsync(Guid walletId);
 }

@@ -3,7 +3,6 @@ using TronWallet.Core.Interfaces.Repositories;
 using TronWallet.Core.Domain.Entities;
 
 namespace TronWallet.Core.Services;
-
 public class TransactionService : ITransactionService
 {
     private readonly IWalletRepository _walletRepository;
@@ -13,7 +12,13 @@ public class TransactionService : ITransactionService
     private readonly ITransactionSigner _transactionSigner;
     private readonly ITransactionRepository _transactionRepository;
 
-    public TransactionService(ITronGridClient tronGridClient, IWalletRepository walletRepository, IEncryptionService encryptionService, ITronAddressService tronAdressService, ITransactionSigner transactionSigner, ITransactionRepository transactionRepository)
+    public TransactionService(
+        ITronGridClient tronGridClient,
+        IWalletRepository walletRepository,
+        IEncryptionService encryptionService,
+        ITronAddressService tronAdressService,
+        ITransactionSigner transactionSigner,
+        ITransactionRepository transactionRepository)
     {
         _tronGridClient = tronGridClient;
         _walletRepository = walletRepository;
@@ -28,38 +33,43 @@ public class TransactionService : ITransactionService
         return await _transactionRepository.GetWalletsTransactionsAsync(walletId, limit, offset);
     }
 
+    // ✅ NEW METHOD
+    public async Task<int> GetWalletTransactionsCountAsync(Guid walletId)
+    {
+        return await _transactionRepository.GetWalletTransactionsCountAsync(walletId);
+    }
+
     public async Task SendTransactionAsync(Guid fromUserId, string toAddress, decimal amountTrx)
     {
         var wallet = await _walletRepository.GetWalletByUserIdAsync(fromUserId);
 
         if (wallet == null)
-        {
             throw new Exception("Cannot find the wallet");
-        }
-        var balanceTRX = (await _tronGridClient.GetAccountAsync(wallet.TronAddress))?.Account?.Balance / 1000000 ?? 0m;            
 
-        if(balanceTRX < amountTrx)
-        {
+        var balanceTRX =
+            (await _tronGridClient.GetAccountAsync(wallet.TronAddress))?.Account?.Balance / 1000000 ?? 0m;
+
+        if (balanceTRX < amountTrx)
             throw new Exception("Not enough TRX on the balance");
-        }
-
 
         var privateKeyHex = _encryptionService.Decrypt(wallet.PrivateKeyEnc);
 
         var toAddressHex = _tronAdressService.Base58ToHex(toAddress);
         var fromAddressHex = _tronAdressService.Base58ToHex(wallet.TronAddress);
 
-        if(toAddressHex == fromAddressHex)
-        {
+        if (toAddressHex == fromAddressHex)
             throw new Exception("You cannot send to yourself");
-        }
 
         long amountSun = (long)(amountTrx * 1000000);
 
-        var unsignedTx = await _tronGridClient.CreateTransactionAsync(fromAddressHex, toAddressHex, amountSun);
+        var unsignedTx = await _tronGridClient.CreateTransactionAsync(
+            fromAddressHex,
+            toAddressHex,
+            amountSun);
 
         var txSign = _transactionSigner.Sign(unsignedTx.RawDataHex, privateKeyHex);
         privateKeyHex = null;
+
         var broadcastResponse = await _tronGridClient.BroadcastTransactionAsync(new
         {
             txID = unsignedTx.TxID,
@@ -67,13 +77,12 @@ public class TransactionService : ITransactionService
             raw_data_hex = unsignedTx.RawDataHex,
             signature = new List<string> { txSign }
         });
-        if(!broadcastResponse.Result)
-        {
+
+        if (!broadcastResponse.Result)
             throw new Exception("Oops something went wrong");
-        }
 
         var txHash = unsignedTx.GetTxHash();
-        
+
         await _transactionRepository.InsertAsync(new WalletTransaction
         {
             WalletId = wallet.Id,
@@ -83,6 +92,5 @@ public class TransactionService : ITransactionService
             AmountSun = amountSun,
             RawData = unsignedTx.RawDataStr
         });
-
     }
 }
