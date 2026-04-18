@@ -81,7 +81,8 @@ public class TransactionRepository : ITransactionRepository
             UPDATE transactions
             SET status = @Status,
                 block_number = @BlockNumber,
-                block_time = @BlockTime
+                block_time = @BlockTime,
+                updated_at = NOW()
             WHERE id = @Id";
 
         using var conn = _factory.CreateConnection();
