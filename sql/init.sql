@@ -25,7 +25,7 @@ CREATE INDEX idx_wallets_tron_address ON wallets(tron_address);
 CREATE TABLE transactions (
     id            UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
     wallet_id     UUID         NOT NULL REFERENCES wallets(id),
-    tx_hash       VARCHAR(128),
+    tx_hash       VARCHAR(128) UNIQUE,
     direction     VARCHAR(4)   NOT NULL CHECK (direction IN ('IN','OUT')),
     from_address  VARCHAR(64)  NOT NULL,
     to_address    VARCHAR(64)  NOT NULL,
@@ -40,7 +40,9 @@ CREATE TABLE transactions (
     confirmed_at  TIMESTAMPTZ
 );
 
-CREATE INDEX idx_transactions_wallet_id ON transactions(wallet_id);
+CREATE INDEX idx_tx_from ON transactions(from_address);
+CREATE INDEX idx_tx_to ON transactions(to_address);
+CREATE INDEX idx_tx_created ON transactions(created_at DESC);
 CREATE INDEX idx_transactions_tx_hash   ON transactions(tx_hash);
 CREATE INDEX idx_transactions_status    ON transactions(status) WHERE status = 'PENDING';
 

@@ -34,7 +34,7 @@ public class DashboardModel : PageModel
 
         Wallet = await _walletService.GetWalletByUserIdAsync(userId);
         Balance = await _walletService.GetBalanceTrxAsync(Wallet.TronAddress);
-        Recent = await _txService.GetWalletsTransactionsAsync(Wallet.Id, limit: 10, offset: 0);
+        Recent = await _txService.GetAccountsTransactionsAsync(Wallet.TronAddress, limit: 10, offset: 0);
     } 
 }
 

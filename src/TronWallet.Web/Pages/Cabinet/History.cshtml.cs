@@ -14,6 +14,7 @@ public class HistoryModel : PageModel
     private readonly IWalletService _walletService;
 
     public List<WalletTransaction> Transactions { get; set; } = new();
+    public Wallet Wallet { get; set; }
 
     public int Page { get; set; } = 1;    
     public int PageSize { get; set; } = 10;
@@ -36,9 +37,9 @@ public class HistoryModel : PageModel
 
         var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
-        var wallet = await _walletService.GetWalletByUserIdAsync(userId);
+        Wallet = await _walletService.GetWalletByUserIdAsync(userId);
 
-        var totalCount = await _transactionService.GetWalletTransactionsCountAsync(wallet.Id);
+        var totalCount = await _transactionService.GetWalletTransactionsCountAsync(Wallet.Id);
 
         TotalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
 
@@ -50,8 +51,8 @@ public class HistoryModel : PageModel
 
         int offset = (Page - 1) * PageSize;
 
-        Transactions = await _transactionService.GetWalletsTransactionsAsync(
-            wallet.Id,
+        Transactions = await _transactionService.GetAccountsTransactionsAsync(
+            Wallet.TronAddress,
             PageSize,
             offset
         );
@@ -73,8 +74,8 @@ public class HistoryModel : PageModel
 
         var offset = (page - 1) * pageSize;
 
-        var txs = await _transactionService.GetWalletsTransactionsAsync(
-            wallet.Id,
+        var txs = await _transactionService.GetAccountsTransactionsAsync(
+            wallet.TronAddress,
             pageSize,
             offset
         );

@@ -31,14 +31,20 @@ public class TransactionRepository : ITransactionRepository
         
     }
 
-    public async Task<List<WalletTransaction>> GetWalletsTransactionsAsync(
-        Guid walletId,
+    public async Task<List<WalletTransaction>> GetAccountsTransactionsAsync(
+        string address,
         int limit = 50,
         int offset = 0)
     {
         var sql = @"
             SELECT * FROM transactions
-            WHERE wallet_id = @WalletId
+            WHERE from_address = @Address
+
+            UNION ALL
+
+            SELECT * FROM transactions
+            WHERE to_address = @Address
+
             ORDER BY created_at DESC
             LIMIT @Limit OFFSET @Offset;
         ";
@@ -48,7 +54,7 @@ public class TransactionRepository : ITransactionRepository
             sql,
             new 
             { 
-                WalletId = walletId,
+                Address = address,
                 Limit = limit,
                 Offset = offset
             }
@@ -87,10 +93,10 @@ public class TransactionRepository : ITransactionRepository
             BlockTime = blockTime,
         });
     }
-    public async Task<bool> ExistsInTxByHashAsync(string txHash)
+    public async Task<bool> ExistsTxByHashAsync(string txHash)
     {
         
-        var sql = "SELECT EXISTS (SELECT 1 FROM transactions WHERE tx_hash = @txHash AND direction = 'IN')";
+        var sql = "SELECT EXISTS (SELECT 1 FROM transactions WHERE tx_hash = @txHash)";
         using var conn = _factory.CreateConnection();
         var result = await conn.ExecuteScalarAsync<bool>(sql, new { TxHash = txHash });
         return result;

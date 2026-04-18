@@ -28,12 +28,11 @@ public class TransactionService : ITransactionService
         _transactionRepository = transactionRepository;
     }
 
-    public async Task<List<WalletTransaction>> GetWalletsTransactionsAsync(Guid walletId, int limit = 50, int offset = 0)
+    public async Task<List<WalletTransaction>> GetAccountsTransactionsAsync(string address, int limit = 50, int offset = 0)
     {
-        return await _transactionRepository.GetWalletsTransactionsAsync(walletId, limit, offset);
+        return await _transactionRepository.GetAccountsTransactionsAsync(address, limit, offset);
     }
 
-    // ✅ NEW METHOD
     public async Task<int> GetWalletTransactionsCountAsync(Guid walletId)
     {
         return await _transactionRepository.GetWalletTransactionsCountAsync(walletId);

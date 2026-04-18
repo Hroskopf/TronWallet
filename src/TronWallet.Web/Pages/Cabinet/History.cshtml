@@ -30,7 +30,7 @@
                     {
                         foreach (var tx in Model.Transactions)
                         {
-                            var isIncoming = tx.Direction == "IN";
+                            var isIncoming = tx.ToAddress == Model.Wallet.TronAddress;
 
                             <tr>
 
@@ -147,6 +147,7 @@
 
 <script>
 let currentPage = @Model.Page;
+const walletAddress = '@Model.Wallet.TronAddress';
 
 async function refreshTransactions() {
     try {
@@ -155,13 +156,24 @@ async function refreshTransactions() {
 
         const tbody = document.querySelector("tbody");
 
-        if (!data.transactions || data.transactions.length === 0) return;
+        if (!data.transactions) return;
 
         tbody.innerHTML = "";
 
+        if (data.transactions.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        No transactions yet.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
         data.transactions.forEach(tx => {
 
-            const isIncoming = tx.direction === "IN";
+            const isIncoming = tx.toAddress === walletAddress;
 
             tbody.innerHTML += `
                 <tr>
@@ -217,6 +229,6 @@ async function refreshTransactions() {
     }
 }
 
-// poll every 15 seconds
+// 🔁 poll every 15 seconds
 setInterval(refreshTransactions, 15000);
 </script>

@@ -41,15 +41,11 @@ public sealed class TransactionSyncService : BackgroundService
 
                 foreach (var tx in txList.Data)
                 {
-                    // Конвертуємо hex → Base58 для порівняння
                     var toAddressBase58 = TronAddressService.HexToBase58(tx.ToAddressHex);
 
-                    // Пропускаємо outgoing — вони вже є в БД після відправки
                     if (toAddressBase58 != wallet.TronAddress) continue;
-                    // Перевіряємо чи вже є в БД — головний захист від дублікатів
-                    if (await txRepo.ExistsInTxByHashAsync(tx.TxID)) continue;
+                    if (await txRepo.ExistsTxByHashAsync(tx.TxID)) continue;
 
-                    // Зберігаємо нову incoming транзакцію
                     await txRepo.InsertAsync(new WalletTransaction
                     {
                         WalletId    = wallet.Id,
@@ -58,7 +54,7 @@ public sealed class TransactionSyncService : BackgroundService
                         FromAddress = TronAddressService.HexToBase58(tx.FromAddressHex),
                         ToAddress   = wallet.TronAddress,
                         AmountSun   = (long)tx.RawData.Contract[0].Parameter.Value.Amount,
-                        Status      = "CONFIRMED",  // одразу CONFIRMED, без PENDING
+                        Status      = "CONFIRMED",
                         BlockTime   = DateTimeOffset
                                         .FromUnixTimeMilliseconds(tx.BlockTimeStamp)
                                         .UtcDateTime,
@@ -67,10 +63,7 @@ public sealed class TransactionSyncService : BackgroundService
                     });
                 }
             }
-            catch (Exception ex)
-            {
-                // _logger.LogError(ex, $"Failed to sync incoming txs for wallet {wallet.Tr}", wallet.TronAddress);
-            }
+            catch {}
         }
     }
     private async Task SyncPendingStatuses()
