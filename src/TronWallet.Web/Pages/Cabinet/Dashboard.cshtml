@@ -12,21 +12,128 @@
 
             <!-- Wallet Info -->
             <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Wallet Address</h5>
-                    <p class="card-text">@Model.Wallet.TronAddress</p>
+                <div class="card-body text-center">
 
-                    <h5 class="card-title mt-3">TRX Balance</h5>
-                    <p class="card-text">@Model.Balance TRX</p>
+                    <h5 class="card-title">Wallet Address</h5>
+
+                    <div class="d-flex justify-content-center align-items-center mb-3">
+                        <div class="text-truncate font-monospace">
+                            @Model.Wallet.TronAddress
+                        </div>
+
+                        <button class="btn btn-sm btn-outline-secondary ms-2 flex-shrink-0"
+                                onclick="navigator.clipboard.writeText('@Model.Wallet.TronAddress')">
+                            Copy
+                        </button>
+                    </div>
+
+                    <h5 class="card-title">TRX Balance</h5>
+                    <p class="card-text fs-5 fw-bold mb-3">
+                        @Model.Balance TRX
+                    </p>
+
+                    <!-- QR -->
+                    <a href="https://tronscan.org/#/address/@Model.Wallet.TronAddress"
+                    target="_blank"
+                    class="d-inline-block text-center">
+
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=@Model.Wallet.TronAddress"
+                            alt="QR Code"
+                            class="img-fluid border rounded shadow-sm" />
+
+                        <div class="small text-muted mt-2">
+                            Open in TronScan
+                        </div>
+
+                    </a>
+
                 </div>
             </div>
 
             <!-- Quick Actions -->
-            <div class=" mb-4">
+            <div class="mb-4">
                 <div class="card-body">
                     <h5 class="card-title mb-3">Actions</h5>
                     <a class="btn btn-primary me-2" href="/Cabinet/Send">Send TRX</a>
                     <a class="btn btn-secondary" href="/Cabinet/Receive">Receive TRX</a>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="card-title mb-0">Recent Transactions</h5>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary">
+                                @Model.Recent.Count() items
+                            </span>
+
+                            <a href="/Cabinet/History"
+                               class="btn btn-sm btn-outline-primary">
+                                View all
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Hash</th>
+                                    <th>Amount</th>
+                                    <th class="text-center">Direction</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @if (Model.Recent.Any())
+                                {
+                                    foreach (var tx in Model.Recent)
+                                    {
+                                        var isIncoming = tx.ToAddress == Model.Wallet.TronAddress;
+
+                                        <tr>
+                                            <td>
+                                                <a href="https://tronscan.org/#/transaction/@tx.TxHash"
+                                                   target="_blank"
+                                                   class="text-decoration-none font-monospace">
+                                                    @tx.TxHash.Substring(0, 10)...
+                                                </a>
+                                            </td>
+
+                                            <td class="@(isIncoming ? "text-success" : "text-danger")">
+                                                <strong>@tx.GetAmountTrx()</strong> TRX
+                                            </td>
+
+                                            <td class="text-center">
+                                                @if (isIncoming)
+                                                {
+                                                    <span class="badge bg-success">IN</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger">OUT</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-4">
+                                            No transactions yet
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                        </table>
+                    </div>
+
                 </div>
             </div>
 

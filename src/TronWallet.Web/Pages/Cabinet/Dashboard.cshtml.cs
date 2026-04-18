@@ -15,15 +15,17 @@ namespace TronWallet.Web.Pages.Cabinet;
 public class DashboardModel : PageModel
 {
     private readonly IWalletService _walletService;
-    private readonly ITronGridClient _tronGridClient;
+    private readonly ITransactionService _txService;
     public string Username { get; set; }
     public Wallet Wallet { get; set; }
     public decimal? Balance { get; set; } = 0;
+    public IEnumerable<WalletTransaction> Recent { get; private set; } = [];
 
-    public DashboardModel(IWalletService walletService, ITronGridClient tronGridClient)
+
+    public DashboardModel(IWalletService walletService, ITransactionService txService)
     {
         _walletService = walletService;
-        _tronGridClient = tronGridClient;
+        _txService = txService;
     }
     public async Task OnGetAsync()
     {
@@ -31,16 +33,8 @@ public class DashboardModel : PageModel
         Username = User.FindFirst(ClaimTypes.Name)?.Value;
 
         Wallet = await _walletService.GetWalletByUserIdAsync(userId);
-        
-        var response =  await _tronGridClient.GetAccountAsync(Wallet.TronAddress);
-        if(response == null || response.Account == null)
-        {
-            Balance = 0;
-        }
-        else
-        {
-            Balance = response.Account.GetBalanceInTRX();
-        }
+        Balance = await _walletService.GetBalanceTrxAsync(Wallet.TronAddress);
+        Recent = await _txService.GetWalletsTransactionsAsync(Wallet.Id, limit: 10, offset: 0);
     } 
 }
 

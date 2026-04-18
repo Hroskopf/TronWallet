@@ -22,8 +22,4 @@ public class Account
     [JsonPropertyName("create_time")]
     public long CreateTime { get; set; }
 
-    public decimal GetBalanceInTRX()
-    {
-        return Balance / 1000000;
-    }
 }

@@ -7,10 +7,12 @@ namespace TronWallet.Core.Services;
 public class WalletService : IWalletService
 {
     private readonly IWalletRepository _walletRepository;
+    private readonly ITronGridClient _tronGridClient;
 
-    public WalletService(IWalletRepository walletRepository)
+    public WalletService(IWalletRepository walletRepository, ITronGridClient tronGridClient)
     {
         _walletRepository = walletRepository;
+        _tronGridClient = tronGridClient;
     }
 
     public async Task<Wallet> GetWalletByUserIdAsync(Guid id)
@@ -22,5 +24,16 @@ public class WalletService : IWalletService
         }
 
         return wallet;
+    }
+
+    public async Task<decimal> GetBalanceTrxAsync(string tronAddress)
+    {
+        var response =  await _tronGridClient.GetAccountAsync(tronAddress);
+        if(response == null || response.Account == null)
+        {
+            return 0;
+        }
+
+        return response.Account.Balance / 1000000;
     }
 }

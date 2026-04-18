@@ -31,24 +31,31 @@ public class TransactionRepository : ITransactionRepository
         
     }
 
-    public async Task<List<WalletTransaction>> GetWalletsTransactionsAsync(Guid walletId)
+    public async Task<List<WalletTransaction>> GetWalletsTransactionsAsync(
+        Guid walletId,
+        int limit = 50,
+        int offset = 0)
     {
         var sql = @"
             SELECT * FROM transactions
             WHERE wallet_id = @WalletId
             ORDER BY created_at DESC
-            LIMIT 100;
+            LIMIT @Limit OFFSET @Offset;
         ";
 
         using var conn = _factory.CreateConnection();
         var transactions = await conn.QueryAsync<WalletTransaction>(
-            sql, 
-            new { WalletId = walletId }
+            sql,
+            new 
+            { 
+                WalletId = walletId,
+                Limit = limit,
+                Offset = offset
+            }
         );
 
         return transactions.ToList();
     }
-
     public async Task<List<WalletTransaction>> GetPendingAsync()
     {
         var sql = "SELECT * FROM transactions WHERE status = @Status";
