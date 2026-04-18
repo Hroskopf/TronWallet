@@ -32,6 +32,7 @@ builder.Services.AddHttpClient("TronGrid", client =>
     client.BaseAddress = new Uri(tronConfig["BaseUrl"]);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
     client.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", tronConfig["ApiKey"]);
+    client.Timeout = TimeSpan.FromSeconds(30);
 });
 
 builder.Services.AddSingleton<DbConnectionFactory>(sp =>
