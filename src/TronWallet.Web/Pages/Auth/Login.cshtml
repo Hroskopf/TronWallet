@@ -4,48 +4,52 @@
     ViewData["Title"] = "Login";
 }
 
-
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card shadow-sm">
                 <div class="card-body">
+
                     <h3 class="card-title text-center mb-4">Login</h3>
+
                     @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-                        {
-                            <div class="alert alert-danger">
-                                @Model.ErrorMessage
-                            </div>
-                        }
+                    {
+                        <div class="alert alert-danger">
+                            @Model.ErrorMessage
+                        </div>
+                    }
+
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
                     <form method="post">
 
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input asp-for="Email" class="form-control" placeholder="Enter your email">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" placeholder="Enter your email" />
                             <span asp-validation-for="Email" class="text-danger"></span>
-                            <span  class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input asp-for="Password" type="password" class="form-control" placeholder="Enter password">
+                            <label asp-for="Password" class="form-label"></label>
+                            <input asp-for="Password" type="password" class="form-control" placeholder="Enter password" />
                             <span asp-validation-for="Password" class="text-danger"></span>
-                            <span  class="text-danger"></span>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                        <button type="submit" class="btn btn-primary w-100">
+                            Login
+                        </button>
 
                         <p class="text-center mt-3">
-                            Do not have an account? <a href="/Auth/Register">Register</a>
+                            Don't have an account? <a href="/Auth/Register">Register</a>
                         </p>
+
                     </form>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
