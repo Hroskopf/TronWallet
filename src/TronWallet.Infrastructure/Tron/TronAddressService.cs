@@ -18,7 +18,7 @@ public class TronAddressService : ITronAddressService
 
     public (string PrivateKeyHex, string PublicKeyHex, string Base58Address) GenerateWallet()
     {
-        var key = TronECKey.GenerateKey(TronNetwork.MainNet);
+        var key = TronECKey.GenerateKey(TronNetwork.TestNet);
 
         var privateKeyHex = key.GetPrivateKey();
         var publicKeyHex = key.GetPubKey().ToHex();

@@ -25,7 +25,7 @@ builder.Services.AddHostedService<TransactionSyncService>();
 // ======================
 builder.Services.AddTronNet(options =>
 {
-    options.Network = TronNetwork.MainNet;
+    options.Network = TronNetwork.TestNet;
 });
 
 builder.Services.AddHttpContextAccessor();
