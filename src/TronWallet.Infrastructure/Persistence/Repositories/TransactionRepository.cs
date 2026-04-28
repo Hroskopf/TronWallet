@@ -82,8 +82,7 @@ public class TransactionRepository : ITransactionRepository
             SET status = @Status,
                 block_number = @BlockNumber,
                 block_time = @BlockTime,
-                confimed_at = @BlockTime,
-                updated_at = NOW()
+                confirmed_at = @BlockTime
             WHERE id = @Id";
 
         using var conn = _factory.CreateConnection();
