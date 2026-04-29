@@ -3,9 +3,10 @@ using TronNet;
 using TronNet.Crypto;
 using System;
 using System.Linq;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
-using System.Numerics;
+using Org.BouncyCastle.Crypto.Digests;
 
 namespace TronWallet.Infrastructure.Tron;
 
@@ -13,83 +14,109 @@ public class TronAddressService : ITronAddressService
 {
     private const string Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-    public TronAddressService() { }
+    private readonly TronNetwork _network;
 
+    public TronAddressService(TronNetworkConfig config)
+    {
+        _network = config.Network;
+    }
 
+    // =========================
+    // WALLET GENERATION
+    // =========================
     public (string PrivateKeyHex, string PublicKeyHex, string Base58Address) GenerateWallet()
     {
-        var key = TronECKey.GenerateKey(TronNetwork.TestNet);
+        var key = TronECKey.GenerateKey(_network);
 
         var privateKeyHex = key.GetPrivateKey();
-        var publicKeyHex = key.GetPubKey().ToHex();
-        var address = key.GetPublicAddress(); // Already Base58 encoded
 
-        return (privateKeyHex, publicKeyHex, address);
+        var publicKeyBytes = key.GetPubKey();
+        var publicKeyHex = Convert.ToHexString(publicKeyBytes).ToLower();
+
+        var addressBytes = PublicKeyToTronAddress(publicKeyBytes);
+        var base58Address = Base58CheckEncode(addressBytes);
+
+        return (privateKeyHex, publicKeyHex, base58Address);
     }
 
-
-    public string Base58ToHex(string base58Address)
+    // =========================
+    // PUBLIC KEY -> TRON ADDRESS
+    // =========================
+    private static byte[] PublicKeyToTronAddress(byte[] publicKey)
     {
-        if (string.IsNullOrWhiteSpace(base58Address))
-            throw new ArgumentException("Base58 address is null or empty");
+        var keccak = new KeccakDigest(256);
+        keccak.BlockUpdate(publicKey, 0, publicKey.Length);
 
-        byte[] decoded = Base58Decode(base58Address);
-        if (decoded.Length < 4)
-            throw new ArgumentException("Invalid Base58 address length");
+        var hash = new byte[32];
+        keccak.DoFinal(hash, 0);
 
-        // Remove last 4 checksum bytes
-        var addressBytes = decoded.Take(decoded.Length - 4).ToArray();
+        var address = new byte[21];
+        address[0] = 0x41; // TRON prefix
 
-        string hex = BitConverter.ToString(addressBytes)
-                               .Replace("-", "")
-                               .ToLower();
+        Array.Copy(hash, 12, address, 1, 20);
 
-        return hex;
+        return address;
     }
 
+    // =========================
+    // HEX -> BASE58
+    // =========================
     public static string HexToBase58(string hex)
     {
         if (string.IsNullOrWhiteSpace(hex))
-            throw new ArgumentException("Hex string is null or empty");
+            throw new ArgumentException("Hex is null or empty");
 
         if (hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
             hex = hex[2..];
 
         var bytes = Convert.FromHexString(hex);
 
-        // Double SHA256 for checksum
-        using var sha256 = SHA256.Create();
-        var hash0 = sha256.ComputeHash(bytes);
-        var hash1 = sha256.ComputeHash(hash0);
-        var checksum = hash1.Take(4).ToArray();
+        ValidateTronAddressBytes(bytes);
 
-        var addressBytes = bytes.Concat(checksum).ToArray();
-
-        return Base58Encode(addressBytes);
+        return Base58CheckEncode(bytes);
     }
 
-    private static byte[] Base58Decode(string base58)
+    // =========================
+    // BASE58 -> HEX
+    // =========================
+    public string Base58ToHex(string base58Address)
     {
-        BigInteger intData = 0;
-        for (int i = 0; i < base58.Length; i++)
-        {
-            int digit = Alphabet.IndexOf(base58[i]);
-            if (digit < 0) throw new FormatException($"Invalid Base58 character `{base58[i]}` at position {i}");
-            intData = intData * 58 + digit;
-        }
+        if (string.IsNullOrWhiteSpace(base58Address))
+            throw new ArgumentException("Base58 address is null or empty");
 
-        // Convert BigInteger to byte array (big-endian)
-        var bytes = intData.ToByteArray(isUnsigned: true, isBigEndian: true);
+        var decoded = Base58Decode(base58Address);
 
-        // Add leading zeros
-        int leadingZeros = base58.TakeWhile(c => c == '1').Count();
-        var result = new byte[leadingZeros + bytes.Length];
-        Array.Copy(bytes, 0, result, leadingZeros, bytes.Length);
+        if (decoded.Length != 25)
+            throw new ArgumentException("Invalid TRON address length");
 
-        return result;
+        var addressBytes = decoded.Take(21).ToArray();
+        var checksum = decoded.Skip(21).ToArray();
+
+        var hash = DoubleSha256(addressBytes).Take(4).ToArray();
+
+        if (!checksum.SequenceEqual(hash))
+            throw new ArgumentException("Invalid checksum");
+
+        if (addressBytes[0] != 0x41)
+            throw new ArgumentException("Invalid TRON prefix");
+
+        return Convert.ToHexString(addressBytes).ToLower();
     }
 
+    // =========================
+    // BASE58CHECK ENCODE
+    // =========================
+    private static string Base58CheckEncode(byte[] data)
+    {
+        var checksum = DoubleSha256(data).Take(4).ToArray();
+        var full = data.Concat(checksum).ToArray();
 
+        return Base58Encode(full);
+    }
+
+    // =========================
+    // BASE58 ENCODE
+    // =========================
     private static string Base58Encode(byte[] bytes)
     {
         BigInteger intData = new BigInteger(bytes, isUnsigned: true, isBigEndian: true);
@@ -102,7 +129,6 @@ public class TronAddressService : ITronAddressService
             sb.Insert(0, Alphabet[remainder]);
         }
 
-        // Add leading '1's for leading zeros
         foreach (var b in bytes)
         {
             if (b == 0x00) sb.Insert(0, '1');
@@ -110,5 +136,47 @@ public class TronAddressService : ITronAddressService
         }
 
         return sb.ToString();
+    }
+
+    // =========================
+    // BASE58 DECODE
+    // =========================
+    private static byte[] Base58Decode(string base58)
+    {
+        BigInteger intData = 0;
+
+        for (int i = 0; i < base58.Length; i++)
+        {
+            int digit = Alphabet.IndexOf(base58[i]);
+            if (digit < 0)
+                throw new FormatException($"Invalid Base58 character: {base58[i]}");
+
+            intData = intData * 58 + digit;
+        }
+
+        var bytes = intData.ToByteArray(isUnsigned: true, isBigEndian: true);
+
+        int leadingZeros = base58.TakeWhile(c => c == '1').Count();
+
+        return new byte[leadingZeros].Concat(bytes).ToArray();
+    }
+
+    // =========================
+    // HELPERS
+    // =========================
+    private static byte[] DoubleSha256(byte[] data)
+    {
+        using var sha = SHA256.Create();
+        var first = sha.ComputeHash(data);
+        return sha.ComputeHash(first);
+    }
+
+    private static void ValidateTronAddressBytes(byte[] bytes)
+    {
+        if (bytes.Length != 21)
+            throw new ArgumentException("TRON address must be 21 bytes");
+
+        if (bytes[0] != 0x41)
+            throw new ArgumentException("Invalid TRON prefix (expected 0x41)");
     }
 }

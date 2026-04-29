@@ -14,31 +14,67 @@ Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//
 // ======================
 // CORE SERVICES
 // ======================
 builder.Services.AddRazorPages();
 builder.Services.AddHostedService<TransactionSyncService>();
 
+//
 // ======================
-// TRON CONFIGURATION
+// TRON NETWORK CONFIG (single source of truth)
+// ======================
+var tronSection = builder.Configuration.GetSection("TronGrid");
+
+// Read selected network (TestNet / MainNet)
+var networkName = tronSection["Network"] ?? "TestNet";
+
+var tronNetwork = networkName == "MainNet"
+    ? TronNetwork.MainNet
+    : TronNetwork.TestNet;
+
+// register network wrapper for DI
+builder.Services.AddSingleton(new TronNetworkConfig
+{
+    Network = tronNetwork
+});
+
+//
+// ======================
+// TRONNET CONFIGURATION
 // ======================
 builder.Services.AddTronNet(options =>
 {
-    options.Network = TronNetwork.TestNet;
+    options.Network = tronNetwork;
 });
 
 builder.Services.AddHttpContextAccessor();
 
-var tronConfig = builder.Configuration.GetSection("TronGrid");
+//
+// ======================
+// TRON GRID CONFIGURATION (FIXED FOR NEW appsettings.json)
+// ======================
+var selectedConfig = tronSection.GetSection(networkName);
+
+var baseUrl = selectedConfig["BaseUrl"]
+    ?? throw new InvalidOperationException($"TronGrid:{networkName}:BaseUrl is missing");
+
 builder.Services.AddHttpClient("TronGrid", client =>
 {
-    client.BaseAddress = new Uri(tronConfig["BaseUrl"]);
+    client.BaseAddress = new Uri(baseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-    client.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", tronConfig["ApiKey"]);
+
+    var apiKey = selectedConfig["ApiKey"];
+    if (!string.IsNullOrWhiteSpace(apiKey))
+    {
+        client.DefaultRequestHeaders.Add("TRON-PRO-API-KEY", apiKey);
+    }
+
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 
+//
 // ======================
 // DATABASE
 // ======================
@@ -51,6 +87,7 @@ builder.Services.AddSingleton<DbConnectionFactory>(sp =>
     return new DbConnectionFactory(connectionString);
 });
 
+//
 // ======================
 // REPOSITORIES
 // ======================
@@ -59,16 +96,21 @@ builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IWalletRepository, WalletRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
+//
 // ======================
 // SERVICES
 // ======================
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+
+// uses TronNetworkConfig (NOT raw enum)
 builder.Services.AddScoped<ITronAddressService, TronAddressService>();
+
 builder.Services.AddScoped<ITransactionSigner, TronTransactionSigner>();
 builder.Services.AddScoped<ITronGridClient, TronGridClient>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+//
 // ======================
 // SECURITY
 // ======================
@@ -83,6 +125,7 @@ builder.Services.AddSingleton<IEncryptionService>(sp =>
     return new AesEncryptionService(key);
 });
 
+//
 // ======================
 // AUTHENTICATION
 // ======================
@@ -103,8 +146,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization();
 
+//
 // ======================
-// RATE LIMITING (LOGIN PROTECTION)
+// RATE LIMITING
 // ======================
 builder.Services.AddRateLimiter(options =>
 {
@@ -112,18 +156,20 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddFixedWindowLimiter("login-limit", opt =>
     {
-        opt.PermitLimit = 5; // max 5 attempts
-        opt.Window = TimeSpan.FromMinutes(1); // per 1 minute
+        opt.PermitLimit = 5;
+        opt.Window = TimeSpan.FromMinutes(1);
         opt.QueueLimit = 0;
         opt.AutoReplenishment = true;
     });
 });
 
+//
 // ======================
 // BUILD APP
 // ======================
 var app = builder.Build();
 
+//
 // ======================
 // PIPELINE
 // ======================
@@ -132,12 +178,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// IMPORTANT: rate limiter must be before auth
 app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+//
 // ======================
 // ENDPOINTS
 // ======================
