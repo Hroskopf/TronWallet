@@ -37,14 +37,18 @@ public class TransactionRepository : ITransactionRepository
         int offset = 0)
     {
         var sql = @"
-            SELECT * FROM transactions
-            WHERE from_address = @Address
+            SELECT *
+            FROM (
+                SELECT *
+                FROM transactions
+                WHERE from_address = @Address
 
-            UNION ALL
+                UNION ALL
 
-            SELECT * FROM transactions
-            WHERE to_address = @Address
-
+                SELECT *
+                FROM transactions
+                WHERE to_address = @Address
+            ) t
             ORDER BY created_at DESC
             LIMIT @Limit OFFSET @Offset;
         ";
