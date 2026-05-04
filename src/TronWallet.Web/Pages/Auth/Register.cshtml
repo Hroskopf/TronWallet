@@ -4,54 +4,65 @@
     ViewData["Title"] = "Register";
 }
 
-
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card shadow-sm">
                 <div class="card-body">
+
                     <h3 class="card-title text-center mb-4">Register</h3>
-                    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-                        {
-                            <div class="alert alert-danger">
-                                @Model.ErrorMessage
-                            </div>
-                        }
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div asp-validation-summary="ModelOnly"
+                             class="alert alert-danger"
+                             role="alert">
+                        </div>
+                    }
+
                     <form method="post">
+
                         <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <input asp-for="Username" class="form-control" placeholder="Enter your name">
+                            <label asp-for="Username" class="form-label"></label>
+                            <input asp-for="Username"
+                                   class="form-control"
+                                   placeholder="Enter your username" />
                             <span asp-validation-for="Username" class="text-danger"></span>
-                            <span  class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input asp-for="Email" class="form-control" placeholder="Enter your email">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email"
+                                   class="form-control"
+                                   placeholder="Enter your email" />
                             <span asp-validation-for="Email" class="text-danger"></span>
-                            <span  class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input asp-for="Password" type="password" class="form-control" placeholder="Enter password">
+                            <label asp-for="Password" class="form-label"></label>
+                            <input asp-for="Password"
+                                   type="password"
+                                   class="form-control"
+                                   placeholder="Enter password" />
                             <span asp-validation-for="Password" class="text-danger"></span>
-                            <span  class="text-danger"></span>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100">Register</button>
+                        <button type="submit" class="btn btn-primary w-100">
+                            Register
+                        </button>
 
                         <p class="text-center mt-3">
-                            Already have an account? <a href="/Auth/Login">Login</a>
+                            Already have an account?
+                            <a href="/Auth/Login">Login</a>
                         </p>
+
                     </form>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
