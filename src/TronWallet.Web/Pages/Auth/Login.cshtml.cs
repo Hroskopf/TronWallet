@@ -33,7 +33,7 @@ public class LoginModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        // Normalize input
+        
         Email = Email?.Trim().ToLowerInvariant();
         Password = Password?.Trim();
 

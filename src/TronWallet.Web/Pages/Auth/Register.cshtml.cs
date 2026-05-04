@@ -67,14 +67,12 @@ public class RegisterModel : PageModel
 
     private void ValidateInput()
     {
-        // Email sanity check (optional)
         if (Email != null &&
             !Regex.IsMatch(Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
         {
             ModelState.AddModelError(nameof(Email), "Invalid email format");
         }
 
-        // Username rules (IMPORTANT)
         if (Username != null &&
             !Regex.IsMatch(Username, @"^[a-zA-Z0-9_]+$"))
         {
@@ -82,7 +80,6 @@ public class RegisterModel : PageModel
                 "Username can contain only letters, numbers, and underscore");
         }
 
-        // Prevent weird password input
         if (Password != null && Password.Any(char.IsControl))
         {
             ModelState.AddModelError(nameof(Password),
