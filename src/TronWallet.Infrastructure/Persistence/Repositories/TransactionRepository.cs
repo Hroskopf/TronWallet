@@ -35,20 +35,12 @@ public class TransactionRepository : ITransactionRepository
         string address,
         int limit = 50,
         int offset = 0)
-    {
+    { 
         var sql = @"
             SELECT *
-            FROM (
-                SELECT *
-                FROM transactions
-                WHERE from_address = @Address
-
-                UNION ALL
-
-                SELECT *
-                FROM transactions
-                WHERE to_address = @Address
-            ) t
+            FROM transactions
+            WHERE from_address = @Address
+            OR to_address = @Address
             ORDER BY created_at DESC
             LIMIT @Limit OFFSET @Offset;
         ";
