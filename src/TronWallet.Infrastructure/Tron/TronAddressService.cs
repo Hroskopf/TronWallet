@@ -26,38 +26,17 @@ public class TronAddressService : ITronAddressService
     // =========================
     public (string PrivateKeyHex, string PublicKeyHex, string Base58Address) GenerateWallet()
     {
-        var key = TronECKey.GenerateKey(_network);
+        var key = TronECKey.GenerateKey(TronNetwork.MainNet);
 
         var privateKeyHex = key.GetPrivateKey();
 
         var publicKeyBytes = key.GetPubKey();
-        var publicKeyHex = Convert.ToHexString(publicKeyBytes).ToLower();
+        var publicKeyHex = publicKeyBytes.ToHex();
 
-        var addressBytes = PublicKeyToTronAddress(publicKeyBytes);
-        var base58Address = Base58CheckEncode(addressBytes);
+        var address = key.GetPublicAddress();
 
-        return (privateKeyHex, publicKeyHex, base58Address);
+        return (privateKeyHex, publicKeyHex, address);
     }
-
-    // =========================
-    // PUBLIC KEY -> TRON ADDRESS
-    // =========================
-    private static byte[] PublicKeyToTronAddress(byte[] publicKey)
-    {
-        var keccak = new KeccakDigest(256);
-        keccak.BlockUpdate(publicKey, 0, publicKey.Length);
-
-        var hash = new byte[32];
-        keccak.DoFinal(hash, 0);
-
-        var address = new byte[21];
-        address[0] = 0x41; // TRON prefix
-
-        Array.Copy(hash, 12, address, 1, 20);
-
-        return address;
-    }
-
     // =========================
     // HEX -> BASE58
     // =========================
