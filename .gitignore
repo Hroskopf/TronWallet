@@ -1,5 +1,5 @@
-src/TronWallet.*/obj
-src/TronWallet.*/bin
+bin/
+obj/
 src/TronWallet.Web/Properties
 src/TronWallet.Web/appsettings.Development.json
 .DS_Store
