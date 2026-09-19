@@ -4,4 +4,7 @@
     <Project Path="src/TronWallet.Infrastructure/TronWallet.Infrastructure.csproj" />
     <Project Path="src/TronWallet.Web/TronWallet.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TronWallet.Tests/TronWallet.Tests.csproj" />
+  </Folder>
 </Solution>
