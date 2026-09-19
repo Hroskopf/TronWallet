@@ -27,14 +27,12 @@ builder.Services.AddHostedService<TransactionSyncService>();
 // ======================
 var tronSection = builder.Configuration.GetSection("TronGrid");
 
-// Read selected network (TestNet / MainNet)
 var networkName = tronSection["Network"] ?? "TestNet";
 
 var tronNetwork = networkName == "MainNet"
     ? TronNetwork.MainNet
     : TronNetwork.TestNet;
 
-// register network wrapper for DI
 builder.Services.AddSingleton(new TronNetworkConfig
 {
     Network = tronNetwork
@@ -53,7 +51,7 @@ builder.Services.AddHttpContextAccessor();
 
 //
 // ======================
-// TRON GRID CONFIGURATION (FIXED FOR NEW appsettings.json)
+// TRON GRID CONFIGURATION
 // ======================
 var selectedConfig = tronSection.GetSection(networkName);
 
@@ -103,7 +101,6 @@ builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 
-// uses TronNetworkConfig (NOT raw enum)
 builder.Services.AddScoped<ITronAddressService, TronAddressService>();
 
 builder.Services.AddScoped<ITransactionSigner, TronTransactionSigner>();
