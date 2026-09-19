@@ -8,9 +8,9 @@ namespace TronWallet.Infrastructure.Security;
 
 public sealed class AesEncryptionService : IEncryptionService
 {
-    private readonly byte[] _key; // 32 байти, Base64 з конфігу
+    private readonly byte[] _key; // 32 bytes, Base64 from config
 
-    // Формат: Base64( nonce[12] | ciphertext | tag[16] )
+    // Format: Base64( nonce[12] | ciphertext | tag[16] )
 
     public AesEncryptionService(string base64Key)
     {

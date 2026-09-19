@@ -11,8 +11,8 @@ CREATE TABLE users (
 CREATE TABLE wallets (
     id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    tron_address    VARCHAR(64) NOT NULL UNIQUE,  -- Base58Check, починається з 'T'
-    private_key_enc TEXT        NOT NULL,          -- AES-256-GCM зашифрований hex private key
+    tron_address    VARCHAR(64) NOT NULL UNIQUE,  -- Base58Check, starts with 'T'
+    private_key_enc TEXT        NOT NULL,          -- hex private key, AES-256-GCM encrypted
     public_key      TEXT        NOT NULL,           -- hex public key
     network         VARCHAR(20) NOT NULL DEFAULT 'shasta',
     is_primary      BOOLEAN     NOT NULL DEFAULT TRUE,
@@ -35,7 +35,7 @@ CREATE TABLE transactions (
                                CHECK (status IN ('PENDING','BROADCASTING','CONFIRMED','FAILED')),
     block_number  BIGINT,
     block_time    TIMESTAMPTZ,
-    raw_data      JSONB,                   -- повна відповідь з TronGrid
+    raw_data      JSONB,                   -- full TronGrid response
     created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     confirmed_at  TIMESTAMPTZ
 );
@@ -49,7 +49,7 @@ CREATE INDEX idx_transactions_status    ON transactions(status) WHERE status = '
 CREATE TABLE refresh_tokens (
     id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    token_hash  TEXT        NOT NULL UNIQUE,  -- SHA-256 хеш токена, не сам токен
+    token_hash  TEXT        NOT NULL UNIQUE,  -- SHA-256 hash of the token, not the token itself
     expires_at  TIMESTAMPTZ NOT NULL,
     revoked_at  TIMESTAMPTZ,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
