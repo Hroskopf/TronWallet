@@ -139,6 +139,22 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.HttpOnly = true;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.SameSite = SameSiteMode.Strict;
+
+        // Auth cookie expired: try to renew the session with the (rotating) refresh token
+        // before sending the user to the login page.
+        options.Events.OnRedirectToLogin = async context =>
+        {
+            var authService = context.HttpContext.RequestServices.GetRequiredService<IAuthService>();
+
+            if (await authService.RefreshSession())
+            {
+                var request = context.Request;
+                context.Response.Redirect(request.PathBase + request.Path + request.QueryString);
+                return;
+            }
+
+            context.Response.Redirect(context.RedirectUri);
+        };
     });
 
 builder.Services.AddAuthorization();
