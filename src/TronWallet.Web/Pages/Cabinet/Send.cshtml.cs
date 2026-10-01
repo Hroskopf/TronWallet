@@ -4,12 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using TronWallet.Core.Interfaces.Services;
-using TronWallet.Core.Interfaces.Repositories;
-using TronWallet.Infrastructure.Tron;
-using TronWallet.Core.Domain.Entities;
-using System.Text.Json;
-using System.Numerics;
-using System.Transactions;
 
 
 namespace TronWallet.Web.Pages.Cabinet;
@@ -30,7 +24,6 @@ public class SendModel : PageModel
 
     public string? Message { get; set; }
     public string? Error { get; set; }
-    public BigInteger TODO { get; private set; }
 
     public SendModel(ITransactionService transactionService)
     {

@@ -1,6 +1,6 @@
 # TronWallet
 
-A custodial [TRON](https://tron.network/) wallet web application built with **ASP.NET Core 9 Razor Pages** in a clean three-layer architecture (Core / Infrastructure / Web).
+A custodial [TRON](https://tron.network/) wallet web application built with **ASP.NET Core 9 Razor Pages** in a three-layer architecture (Core / Infrastructure / Web).
 
 Users register, get a TRON address, and manage their funds through a web cabinet: a balance dashboard, send and receive flows, and a transaction history kept in sync with the chain. Transactions are signed **offline** (TronNet + Protobuf) and broadcast through the [TronGrid](https://www.trongrid.io/) API — private keys never leave the server, where they are stored AES-encrypted. Authentication uses BCrypt password hashing with rotating refresh tokens. Persistence is **PostgreSQL** accessed via **Dapper**.
 
@@ -19,7 +19,7 @@ Runs against the **Shasta testnet** by default; the network is configurable to m
 
 ## Architecture
 
-Three projects with a strict inward dependency direction — `Web → Infrastructure → Core`, and `Core` depends on nothing:
+Three projects with an inward dependency direction — `Web → Infrastructure → Core`; `Core` references no other project, and the Razor pages talk only to `Core` interfaces:
 
 ```mermaid
 graph LR
@@ -28,7 +28,7 @@ graph LR
     Web --> Core
 ```
 
-- **`TronWallet.Core`** — domain entities (`User`, `Wallet`, `WalletTransaction`, `RefreshToken`), the application services (`AuthService`, `WalletService`, `TransactionService`), and the interfaces everything else implements. No framework or database references.
+- **`TronWallet.Core`** — domain entities (`User`, `Wallet`, `WalletTransaction`, `RefreshToken`), the application services (`AuthService`, `WalletService`, `TransactionService`), and the interfaces everything else implements. No database or TRON-library references; the one framework dependency is `AuthService`, which uses ASP.NET Core's cookie authentication for sign-in (moving that behind an interface is a known next step).
 - **`TronWallet.Infrastructure`** — implementations: PostgreSQL repositories (Dapper), the AES encryption service, and the TRON integration (TronGrid HTTP client, offline transaction signer, address service, background sync).
 - **`TronWallet.Web`** — Razor Pages UI (`Auth` and `Cabinet` areas), configuration, and dependency-injection composition root.
 
@@ -86,6 +86,14 @@ dotnet run --project src/TronWallet.Web
 ```
 
 Register an account, and top up your generated address with test TRX from the [Shasta faucet](https://shasta.tronex.io/) to try the send flow.
+
+## Tests
+
+```bash
+dotnet test
+```
+
+Unit tests ([`tests/TronWallet.Tests`](tests/TronWallet.Tests)) cover authentication (login, registration, refresh-token rotation and revocation), the send-transaction flow (balance checks, broadcast failures), and AES-GCM encryption (round-trips, tamper detection, key validation). GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) builds and runs them on every push and pull request.
 
 ## Project structure
 

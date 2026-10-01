@@ -3,9 +3,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
-using TronWallet.Infrastructure.Persistence.Repositories;
-using TronWallet.Core.Interfaces.Repositories;
-using TronWallet.Infrastructure.Tron;
 using TronWallet.Core.Domain.Entities;
 using TronWallet.Core.Interfaces.Services;
 
